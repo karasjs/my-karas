@@ -1,7 +1,7 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('karas')) :
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('karas')) :
   typeof define === 'function' && define.amd ? define(['karas'], factory) :
-  (global = global || self, factory(global.karas));
+  (global = global || self, global.karas = factory(global.karas));
 }(this, (function (karas) { 'use strict';
 
   karas = karas && karas.hasOwnProperty('default') ? karas['default'] : karas;
@@ -234,6 +234,8 @@
 
     return createVd(tagName, props, children);
   };
+
+  return karas;
 
 })));
 //# sourceMappingURL=index.js.map

@@ -104,3 +104,5 @@ karas.createVd = function(tagName, props, children) {
   }
   return createVd(tagName, props, children);
 };
+
+export default karas;
