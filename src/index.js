@@ -42,7 +42,6 @@ class MyCtx {
   'arc',
   'moveTo',
   'lineTo',
-  'ellipse',
   'bezierCurveTo',
   'quadraticCurveTo',
 ].forEach(fn => {

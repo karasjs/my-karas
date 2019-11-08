@@ -140,7 +140,7 @@
     return MyCtx;
   }();
 
-  ['measureText', 'setTransform', 'setLineDash', 'clearRect', 'fillText', 'fill', 'stroke', 'beginPath', 'closePath', 'rect', 'arc', 'moveTo', 'lineTo', 'ellipse', 'bezierCurveTo', 'quadraticCurveTo'].forEach(function (fn) {
+  ['measureText', 'setTransform', 'setLineDash', 'clearRect', 'fillText', 'fill', 'stroke', 'beginPath', 'closePath', 'rect', 'arc', 'moveTo', 'lineTo', 'bezierCurveTo', 'quadraticCurveTo'].forEach(function (fn) {
     MyCtx.prototype[fn] = function () {
       var ctx = this.ctx;
 
