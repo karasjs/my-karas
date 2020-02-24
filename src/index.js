@@ -7,8 +7,10 @@ class MyCtx {
       'fillStyle',
       'strokeStyle',
       'lineWidth',
+      'lineCap',
+      'lineDash',
     ].forEach(k => {
-      const nk = 'set' + k.charAt(0).toUpperCase() + k.slice(1);
+      let nk = 'set' + k.charAt(0).toUpperCase() + k.slice(1);
       Object.defineProperty(this, k, {
         set(v) {
           ctx[nk](v);
@@ -17,7 +19,7 @@ class MyCtx {
     });
     Object.defineProperty(this, 'font', {
       set(v) {
-        const size = /(\d+)px/.exec(v);
+        let size = /(\d+)px/.exec(v);
         ctx.setFontSize(size[1]);
       },
     });
@@ -46,40 +48,32 @@ class MyCtx {
   'quadraticCurveTo',
 ].forEach(fn => {
   MyCtx.prototype[fn] = function() {
-    const ctx = this.ctx;
-    if (ctx[fn]) {
+    let ctx = this.ctx;
+    if(ctx[fn]) {
       return ctx[fn].apply(ctx, arguments);
     }
   };
 });
 
 karas.inject.requestAnimationFrame = function(cb) {
-  setTimeout(cb, 16.7);
+  setTimeout(cb, 1000 / 60);
 };
 
 class Root extends karas.Root {
-  constructor(...data) {
-    super(...data);
-  }
   appendTo(ctx) {
     this.__initProps();
-    if (this.tagName.toUpperCase() === 'SVG') {
-      this.__renderMode = karas.mode.SVG;
-      return;
-    }
-    if (this.tagName.toUpperCase() === 'CANVAS') {
-      this.__ctx = new MyCtx(ctx);
-      this.__renderMode = karas.mode.CANVAS;
-    }
-    const { style } = this;
-    if ([ 'flex', 'block' ].indexOf(style.display) === -1) {
+    this.__refreshLevel = karas.level.REFLOW;
+    this.__ctx = new MyCtx(ctx);
+    this.__renderMode = karas.mode.CANVAS;
+    let { style } = this;
+    if(['flex', 'block'].indexOf(style.display) === -1) {
       style.display = 'block';
     }
     // 同理position不能为absolute
-    if (style.position === 'absolute') {
+    if(style.position === 'absolute') {
       style.position = 'static';
     }
-    const { renderMode, ctx: myCtx } = this;
+    let { renderMode, ctx: myCtx } = this;
     this.__traverse(myCtx, undefined, renderMode);
     this.__traverseCss(this, this.props.css);
     this.__init();
@@ -87,18 +81,20 @@ class Root extends karas.Root {
   }
 
   refresh(cb) {
-    const ctx = this.ctx.ctx;
+    let ctx = this.ctx.ctx;
+
     function wrap() {
       ctx.draw();
       cb && cb();
     }
+
     super.refresh(wrap);
   }
 }
 
-const createVd = karas.createVd;
+let createVd = karas.createVd;
 karas.createVd = function(tagName, props, children) {
-  if ([ 'canvas', 'svg' ].indexOf(tagName) > -1) {
+  if(['canvas', 'svg'].indexOf(tagName) > -1) {
     return new Root(tagName, props, children);
   }
   return createVd(tagName, props, children);

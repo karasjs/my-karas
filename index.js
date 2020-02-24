@@ -114,7 +114,7 @@
       _classCallCheck(this, MyCtx);
 
       this.__ctx = ctx;
-      ['fillStyle', 'strokeStyle', 'lineWidth'].forEach(function (k) {
+      ['fillStyle', 'strokeStyle', 'lineWidth', 'lineCap', 'lineDash'].forEach(function (k) {
         var nk = 'set' + k.charAt(0).toUpperCase() + k.slice(1);
         Object.defineProperty(_this, k, {
           set: function set(v) {
@@ -151,7 +151,7 @@
   });
 
   karas.inject.requestAnimationFrame = function (cb) {
-    setTimeout(cb, 16.7);
+    setTimeout(cb, 1000 / 60);
   };
 
   var Root =
@@ -160,15 +160,9 @@
     _inherits(Root, _karas$Root);
 
     function Root() {
-      var _getPrototypeOf2;
-
       _classCallCheck(this, Root);
 
-      for (var _len = arguments.length, data = new Array(_len), _key = 0; _key < _len; _key++) {
-        data[_key] = arguments[_key];
-      }
-
-      return _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(Root)).call.apply(_getPrototypeOf2, [this].concat(data)));
+      return _possibleConstructorReturn(this, _getPrototypeOf(Root).apply(this, arguments));
     }
 
     _createClass(Root, [{
@@ -176,16 +170,9 @@
       value: function appendTo(ctx) {
         this.__initProps();
 
-        if (this.tagName.toUpperCase() === 'SVG') {
-          this.__renderMode = karas.mode.SVG;
-          return;
-        }
-
-        if (this.tagName.toUpperCase() === 'CANVAS') {
-          this.__ctx = new MyCtx(ctx);
-          this.__renderMode = karas.mode.CANVAS;
-        }
-
+        this.__refreshLevel = level.REFLOW;
+        this.__ctx = new MyCtx(ctx);
+        this.__renderMode = karas.mode.CANVAS;
         var style = this.style;
 
         if (['flex', 'block'].indexOf(style.display) === -1) {
