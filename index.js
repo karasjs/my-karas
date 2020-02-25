@@ -170,9 +170,12 @@
       value: function appendTo(ctx) {
         this.__initProps();
 
-        this.__refreshLevel = level.REFLOW;
+        this.__refreshLevel = karas.level.REFLOW;
         this.__ctx = new MyCtx(ctx);
         this.__renderMode = karas.mode.CANVAS;
+        this.__defs = {
+          clear: function clear() {}
+        };
         var style = this.style;
 
         if (['flex', 'block'].indexOf(style.display) === -1) {

@@ -65,6 +65,9 @@ class Root extends karas.Root {
     this.__refreshLevel = karas.level.REFLOW;
     this.__ctx = new MyCtx(ctx);
     this.__renderMode = karas.mode.CANVAS;
+    this.__defs = {
+      clear() {},
+    };
     let { style } = this;
     if(['flex', 'block'].indexOf(style.display) === -1) {
       style.display = 'block';
