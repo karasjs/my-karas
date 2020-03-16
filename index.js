@@ -114,7 +114,7 @@
       _classCallCheck(this, MyCtx);
 
       this.__ctx = ctx;
-      ['fillStyle', 'strokeStyle', 'lineWidth', 'lineCap', 'lineDash'].forEach(function (k) {
+      ['fillStyle', 'strokeStyle', 'lineWidth', 'lineCap', 'lineDash', 'globalAlpha'].forEach(function (k) {
         var nk = 'set' + k.charAt(0).toUpperCase() + k.slice(1);
         Object.defineProperty(_this, k, {
           set: function set(v) {

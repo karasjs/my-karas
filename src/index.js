@@ -9,6 +9,7 @@ class MyCtx {
       'lineWidth',
       'lineCap',
       'lineDash',
+      'globalAlpha',
     ].forEach(k => {
       let nk = 'set' + k.charAt(0).toUpperCase() + k.slice(1);
       Object.defineProperty(this, k, {
