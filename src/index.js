@@ -95,12 +95,23 @@ class Root extends karas.Root {
   }
 }
 
-let createVd = karas.createVd;
-karas.createVd = function(tagName, props, children) {
-  if(['canvas', 'svg'].indexOf(tagName) > -1) {
-    return new Root(tagName, props, children);
-  }
-  return createVd(tagName, props, children);
+karas.inject.measureImg = function(src, cb) {
+  my.getImageInfo({
+    src,
+    success: function(res) {
+      cb({
+        success: true,
+        width: res.width,
+        height: res.height,
+        source: src,
+      });
+    },
+    fail: function() {
+      cb({
+        success: false,
+      });
+    },
+  });
 };
 
 export default karas;

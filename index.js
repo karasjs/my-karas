@@ -4,7 +4,7 @@
   (global = global || self, global.karas = factory(global.karas));
 }(this, (function (karas) { 'use strict';
 
-  karas = karas && karas.hasOwnProperty('default') ? karas['default'] : karas;
+  karas = karas && Object.prototype.hasOwnProperty.call(karas, 'default') ? karas['default'] : karas;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -59,6 +59,19 @@
     return _setPrototypeOf(o, p);
   }
 
+  function _isNativeReflectConstruct() {
+    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+    if (Reflect.construct.sham) return false;
+    if (typeof Proxy === "function") return true;
+
+    try {
+      Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   function _assertThisInitialized(self) {
     if (self === void 0) {
       throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
@@ -73,6 +86,23 @@
     }
 
     return _assertThisInitialized(self);
+  }
+
+  function _createSuper(Derived) {
+    return function () {
+      var Super = _getPrototypeOf(Derived),
+          result;
+
+      if (_isNativeReflectConstruct()) {
+        var NewTarget = _getPrototypeOf(this).constructor;
+
+        result = Reflect.construct(Super, arguments, NewTarget);
+      } else {
+        result = Super.apply(this, arguments);
+      }
+
+      return _possibleConstructorReturn(this, result);
+    };
   }
 
   function _superPropBase(object, property) {
@@ -105,9 +135,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var MyCtx =
-  /*#__PURE__*/
-  function () {
+  var MyCtx = /*#__PURE__*/function () {
     function MyCtx(ctx) {
       var _this = this;
 
@@ -154,15 +182,15 @@
     setTimeout(cb, 1000 / 60);
   };
 
-  var Root =
-  /*#__PURE__*/
-  function (_karas$Root) {
+  var Root = /*#__PURE__*/function (_karas$Root) {
     _inherits(Root, _karas$Root);
+
+    var _super = _createSuper(Root);
 
     function Root() {
       _classCallCheck(this, Root);
 
-      return _possibleConstructorReturn(this, _getPrototypeOf(Root).apply(this, arguments));
+      return _super.apply(this, arguments);
     }
 
     _createClass(Root, [{
@@ -215,14 +243,23 @@
     return Root;
   }(karas.Root);
 
-  var createVd = karas.createVd;
-
-  karas.createVd = function (tagName, props, children) {
-    if (['canvas', 'svg'].indexOf(tagName) > -1) {
-      return new Root(tagName, props, children);
-    }
-
-    return createVd(tagName, props, children);
+  karas.inject.measureImg = function (src, cb) {
+    my.getImageInfo({
+      src: src,
+      success: function success(res) {
+        cb({
+          success: true,
+          width: res.width,
+          height: res.height,
+          source: src
+        });
+      },
+      fail: function fail() {
+        cb({
+          success: false
+        });
+      }
+    });
   };
 
   return karas;
