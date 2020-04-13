@@ -46,6 +46,7 @@ class MyCtx {
   'lineTo',
   'bezierCurveTo',
   'quadraticCurveTo',
+  'drawImage',
 ].forEach(fn => {
   MyCtx.prototype[fn] = function() {
     let ctx = this.ctx;
@@ -95,7 +96,26 @@ class Root extends karas.Root {
   }
 }
 
-karas.inject.measureImg = function(src, cb) {
+// Root引用指过来
+let createVd = karas.createVd;
+karas.createVd = function(tagName, props, children) {
+  if(['canvas', 'svg'].indexOf(tagName) > -1) {
+    return new Root(tagName, props, children);
+  }
+  return createVd(tagName, props, children);
+};
+
+karas.inject.measureImg = function(src, cb, optinos = {}) {
+  if(src.indexOf('data:') === 0) {
+    let { width = {}, height = {} } = optinos;
+    cb({
+      success: true,
+      width: width.value,
+      height: height.value,
+      source: src,
+    });
+    return;
+  }
   my.getImageInfo({
     src,
     success: function(res) {

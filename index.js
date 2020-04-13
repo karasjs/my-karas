@@ -168,7 +168,7 @@
     return MyCtx;
   }();
 
-  ['measureText', 'setTransform', 'setLineDash', 'clearRect', 'fillText', 'fill', 'stroke', 'beginPath', 'closePath', 'rect', 'arc', 'moveTo', 'lineTo', 'bezierCurveTo', 'quadraticCurveTo'].forEach(function (fn) {
+  ['measureText', 'setTransform', 'setLineDash', 'clearRect', 'fillText', 'fill', 'stroke', 'beginPath', 'closePath', 'rect', 'arc', 'moveTo', 'lineTo', 'bezierCurveTo', 'quadraticCurveTo', 'drawImage'].forEach(function (fn) {
     MyCtx.prototype[fn] = function () {
       var ctx = this.ctx;
 
@@ -241,9 +241,36 @@
     }]);
 
     return Root;
-  }(karas.Root);
+  }(karas.Root); // Root引用指过来
+
+
+  var createVd = karas.createVd;
+
+  karas.createVd = function (tagName, props, children) {
+    if (['canvas', 'svg'].indexOf(tagName) > -1) {
+      return new Root(tagName, props, children);
+    }
+
+    return createVd(tagName, props, children);
+  };
 
   karas.inject.measureImg = function (src, cb) {
+    var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    if (src.indexOf('data:') === 0) {
+      var _optinos$width = optinos.width,
+          width = _optinos$width === void 0 ? {} : _optinos$width,
+          _optinos$height = optinos.height,
+          height = _optinos$height === void 0 ? {} : _optinos$height;
+      cb({
+        success: true,
+        width: width.value,
+        height: height.value,
+        source: src
+      });
+      return;
+    }
+
     my.getImageInfo({
       src: src,
       success: function success(res) {
