@@ -135,49 +135,6 @@
     return _get(target, property, receiver || target);
   }
 
-  var MyCtx = /*#__PURE__*/function () {
-    function MyCtx(ctx) {
-      var _this = this;
-
-      _classCallCheck(this, MyCtx);
-
-      this.__ctx = ctx;
-      ['fillStyle', 'strokeStyle', 'lineWidth', 'lineCap', 'globalAlpha'].forEach(function (k) {
-        var nk = 'set' + k.charAt(0).toUpperCase() + k.slice(1);
-        Object.defineProperty(_this, k, {
-          set: function set(v) {
-            ctx[nk](v);
-          }
-        });
-      });
-      Object.defineProperty(this, 'font', {
-        set: function set(v) {
-          var size = /(\d+)px/.exec(v);
-          ctx.setFontSize(size[1]);
-        }
-      });
-    }
-
-    _createClass(MyCtx, [{
-      key: "ctx",
-      get: function get() {
-        return this.__ctx;
-      }
-    }]);
-
-    return MyCtx;
-  }();
-
-  ['measureText', 'setTransform', 'setLineDash', 'clearRect', 'fillText', 'fill', 'stroke', 'beginPath', 'closePath', 'rect', 'arc', 'moveTo', 'lineTo', 'bezierCurveTo', 'quadraticCurveTo', 'drawImage'].forEach(function (fn) {
-    MyCtx.prototype[fn] = function () {
-      var ctx = this.ctx;
-
-      if (ctx[fn]) {
-        return ctx[fn].apply(ctx, arguments);
-      }
-    };
-  });
-
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
   };
@@ -199,7 +156,7 @@
         this.__initProps();
 
         this.__refreshLevel = karas.level.REFLOW;
-        this.__ctx = new MyCtx(ctx);
+        this.__ctx = ctx;
         this.__renderMode = karas.mode.CANVAS;
         this.__defs = {
           clear: function clear() {}
@@ -229,10 +186,10 @@
     }, {
       key: "refresh",
       value: function refresh(cb) {
-        var ctx = this.ctx.ctx;
+        var ctx = this.ctx;
 
         function wrap() {
-          ctx.draw();
+          ctx.draw(true);
           cb && cb();
         }
 
@@ -287,6 +244,48 @@
         });
       }
     });
+  };
+
+  karas.inject.isDom = function (o) {
+    return karas.util.isFunction(o.arc);
+  };
+
+  var cc, mc;
+
+  karas.inject.setCacheCanvas = function (o) {
+    cc = o;
+  };
+
+  karas.inject.setMaskCanvas = function (o) {
+    mc = o;
+  };
+
+  karas.inject.getCacheCanvas = function () {
+    if (!cc) {
+      throw new Error('Need a cache canvas');
+    }
+
+    return {
+      ctx: cc,
+      canvas: cc,
+      draw: function draw(ctx) {
+        ctx.draw(true);
+      }
+    };
+  };
+
+  karas.inject.getMaskCanvas = function () {
+    if (!mc) {
+      throw new Error('Need a mask canvas');
+    }
+
+    return {
+      ctx: mc,
+      canvas: mc,
+      draw: function draw(ctx) {
+        ctx.draw(true);
+      }
+    };
   };
 
   return karas;

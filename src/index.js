@@ -1,61 +1,5 @@
 import karas from 'karas';
 
-class MyCtx {
-  constructor(ctx) {
-    this.__ctx = ctx;
-    [
-      'fillStyle',
-      'strokeStyle',
-      'lineWidth',
-      'lineCap',
-      'globalAlpha',
-    ].forEach(k => {
-      let nk = 'set' + k.charAt(0).toUpperCase() + k.slice(1);
-      Object.defineProperty(this, k, {
-        set(v) {
-          ctx[nk](v);
-        },
-      });
-    });
-    Object.defineProperty(this, 'font', {
-      set(v) {
-        let size = /(\d+)px/.exec(v);
-        ctx.setFontSize(size[1]);
-      },
-    });
-  }
-
-  get ctx() {
-    return this.__ctx;
-  }
-}
-
-[
-  'measureText',
-  'setTransform',
-  'setLineDash',
-  'clearRect',
-  'fillText',
-  'fill',
-  'stroke',
-  'beginPath',
-  'closePath',
-  'rect',
-  'arc',
-  'moveTo',
-  'lineTo',
-  'bezierCurveTo',
-  'quadraticCurveTo',
-  'drawImage',
-].forEach(fn => {
-  MyCtx.prototype[fn] = function() {
-    let ctx = this.ctx;
-    if(ctx[fn]) {
-      return ctx[fn].apply(ctx, arguments);
-    }
-  };
-});
-
 karas.inject.requestAnimationFrame = function(cb) {
   setTimeout(cb, 1000 / 60);
 };
@@ -64,7 +8,7 @@ class Root extends karas.Root {
   appendTo(ctx) {
     this.__initProps();
     this.__refreshLevel = karas.level.REFLOW;
-    this.__ctx = new MyCtx(ctx);
+    this.__ctx = ctx;
     this.__renderMode = karas.mode.CANVAS;
     this.__defs = {
       clear() {},
@@ -85,10 +29,10 @@ class Root extends karas.Root {
   }
 
   refresh(cb) {
-    let ctx = this.ctx.ctx;
+    let ctx = this.ctx;
 
     function wrap() {
-      ctx.draw();
+      ctx.draw(true);
       cb && cb();
     }
 
@@ -132,6 +76,46 @@ karas.inject.measureImg = function(src, cb, optinos = {}) {
       });
     },
   });
+};
+
+karas.inject.isDom = function(o) {
+  return karas.util.isFunction(o.arc);
+}
+
+let cc, mc;
+
+karas.inject.setCacheCanvas = function(o) {
+  cc = o;
+};
+
+karas.inject.setMaskCanvas = function(o) {
+  mc = o;
+};
+
+karas.inject.getCacheCanvas = function() {
+  if(!cc) {
+    throw new Error('Need a cache canvas');
+  }
+  return {
+    ctx: cc,
+    canvas: cc,
+    draw(ctx) {
+      ctx.draw(true);
+    },
+  };
+};
+
+karas.inject.getMaskCanvas = function() {
+  if(!mc) {
+    throw new Error('Need a mask canvas');
+  }
+  return {
+    ctx: mc,
+    canvas: mc,
+    draw(ctx) {
+      ctx.draw(true);
+    },
+  };
 };
 
 export default karas;
