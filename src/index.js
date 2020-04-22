@@ -79,7 +79,7 @@ karas.inject.measureImg = function(src, cb, optinos = {}) {
 };
 
 karas.inject.isDom = function(o) {
-  return karas.util.isFunction(o.arc);
+  return o && karas.util.isFunction(o.arc);
 }
 
 let cc, mc;
