@@ -161,26 +161,6 @@
         this.__defs = {
           clear: function clear() {}
         };
-        var style = this.style;
-
-        if (['flex', 'block'].indexOf(style.display) === -1) {
-          style.display = 'block';
-        } // 同理position不能为absolute
-
-
-        if (style.position === 'absolute') {
-          style.position = 'static';
-        }
-
-        var renderMode = this.renderMode,
-            myCtx = this.ctx;
-
-        this.__traverse(myCtx, undefined, renderMode);
-
-        this.__traverseCss(this, this.props.css);
-
-        this.__init();
-
         this.refresh();
       }
     }, {
@@ -211,10 +191,15 @@
     return createVd(tagName, props, children);
   };
 
-  karas.inject.measureImg = function (src, cb) {
+  var IMG = {};
+  var INIT = 0;
+  var LOADING = 1;
+  var LOADED = 2;
+
+  karas.inject.measureImg = function (url, cb) {
     var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-    if (src.indexOf('data:') === 0) {
+    if (url.indexOf('data:') === 0) {
       var _optinos$width = optinos.width,
           width = _optinos$width === void 0 ? {} : _optinos$width,
           _optinos$height = optinos.height,
@@ -223,27 +208,49 @@
         success: true,
         width: width.value,
         height: height.value,
-        source: src
+        url: url,
+        source: url
       });
       return;
     }
 
-    my.getImageInfo({
-      src: src,
-      success: function success(res) {
-        cb({
-          success: true,
-          width: res.width,
-          height: res.height,
-          source: src
-        });
-      },
-      fail: function fail() {
-        cb({
-          success: false
-        });
-      }
-    });
+    var cache = IMG[url] = IMG[url] || {
+      state: INIT,
+      task: []
+    };
+
+    if (cache.state === LOADED) {
+      cb(cache);
+    } else if (cache.state === LOADING) {
+      cache.task.push(cb);
+    } else {
+      cache.state = LOADING;
+      cache.task.push(cb);
+      my.getImageInfo({
+        src: url,
+        success: function success(res) {
+          cache.state = LOADED;
+          cache.success = true;
+          cache.width = res.width;
+          cache.height = res.height;
+          cache.source = url;
+          cache.url = url;
+          var list = cache.task.splice(0);
+          list.forEach(function (cb) {
+            return cb(cache);
+          });
+        },
+        fail: function fail() {
+          cache.state = LOADED;
+          cache.success = false;
+          cache.url = url;
+          var list = cache.task.splice(0);
+          list.forEach(function (cb) {
+            return cb(cache);
+          });
+        }
+      });
+    }
   };
 
   karas.inject.isDom = function (o) {

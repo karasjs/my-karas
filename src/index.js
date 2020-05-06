@@ -13,18 +13,6 @@ class Root extends karas.Root {
     this.__defs = {
       clear() {},
     };
-    let { style } = this;
-    if(['flex', 'block'].indexOf(style.display) === -1) {
-      style.display = 'block';
-    }
-    // 同理position不能为absolute
-    if(style.position === 'absolute') {
-      style.position = 'static';
-    }
-    let { renderMode, ctx: myCtx } = this;
-    this.__traverse(myCtx, undefined, renderMode);
-    this.__traverseCss(this, this.props.css);
-    this.__init();
     this.refresh();
   }
 
@@ -49,33 +37,57 @@ karas.createVd = function(tagName, props, children) {
   return createVd(tagName, props, children);
 };
 
-karas.inject.measureImg = function(src, cb, optinos = {}) {
-  if(src.indexOf('data:') === 0) {
+const IMG = {};
+const INIT = 0;
+const LOADING = 1;
+const LOADED = 2;
+
+karas.inject.measureImg = function(url, cb, optinos = {}) {
+  if(url.indexOf('data:') === 0) {
     let { width = {}, height = {} } = optinos;
     cb({
       success: true,
       width: width.value,
       height: height.value,
-      source: src,
+      url,
+      source: url,
     });
     return;
   }
-  my.getImageInfo({
-    src,
-    success: function(res) {
-      cb({
-        success: true,
-        width: res.width,
-        height: res.height,
-        source: src,
-      });
-    },
-    fail: function() {
-      cb({
-        success: false,
-      });
-    },
-  });
+  let cache = IMG[url] = IMG[url] || {
+    state: INIT,
+    task: [],
+  };
+  if(cache.state === LOADED) {
+    cb(cache);
+  }
+  else if(cache.state === LOADING) {
+    cache.task.push(cb);
+  }
+  else {
+    cache.state = LOADING;
+    cache.task.push(cb);
+    my.getImageInfo({
+      src: url,
+      success: function(res) {
+        cache.state = LOADED;
+        cache.success = true;
+        cache.width = res.width;
+        cache.height = res.height;
+        cache.source = url;
+        cache.url = url;
+        let list = cache.task.splice(0);
+        list.forEach(cb => cb(cache));
+      },
+      fail: function() {
+        cache.state = LOADED;
+        cache.success = false;
+        cache.url = url;
+        let list = cache.task.splice(0);
+        list.forEach(cb => cb(cache));
+      },
+    });
+  }
 };
 
 karas.inject.isDom = function(o) {
