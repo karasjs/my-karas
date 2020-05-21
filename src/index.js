@@ -37,10 +37,10 @@ karas.createVd = function(tagName, props, children) {
   return createVd(tagName, props, children);
 };
 
-const IMG = {};
-const INIT = 0;
-const LOADING = 1;
-const LOADED = 2;
+const IMG = karas.inject.IMG;
+const INIT = karas.inject.INIT;
+const LOADING = karas.inject.LOADING;
+const LOADED = karas.inject.LOADED;
 
 karas.inject.measureImg = function(url, cb, optinos = {}) {
   if(url.indexOf('data:') === 0) {
