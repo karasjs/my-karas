@@ -191,10 +191,10 @@
     return createVd(tagName, props, children);
   };
 
-  var IMG = {};
-  var INIT = 0;
-  var LOADING = 1;
-  var LOADED = 2;
+  var IMG = karas.inject.IMG;
+  var INIT = karas.inject.INIT;
+  var LOADING = karas.inject.LOADING;
+  var LOADED = karas.inject.LOADED;
 
   karas.inject.measureImg = function (url, cb) {
     var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
