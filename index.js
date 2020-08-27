@@ -153,6 +153,8 @@
     _createClass(Root, [{
       key: "appendTo",
       value: function appendTo(ctx) {
+        this.__children = karas.builder.initRoot(this.__cd, this);
+
         this.__initProps();
 
         this.__refreshLevel = karas.level.REFLOW;
@@ -257,38 +259,23 @@
     return o && karas.util.isFunction(o.arc);
   };
 
-  var cc, mc;
+  var CANVAS = {};
 
-  karas.inject.setCacheCanvas = function (o) {
-    cc = o;
-  };
-
-  karas.inject.setMaskCanvas = function (o) {
-    mc = o;
+  karas.inject.setCacheCanvas = function (k, v) {
+    CANVAS[k] = v;
   };
 
   karas.inject.getCacheCanvas = function () {
-    if (!cc) {
+    var key = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '__$$cache$$__';
+
+    if (!CANVAS[key]) {
       throw new Error('Need a cache canvas');
     }
 
+    var o = CANVAS[key];
     return {
-      ctx: cc,
-      canvas: cc,
-      draw: function draw(ctx) {
-        ctx.draw(true);
-      }
-    };
-  };
-
-  karas.inject.getMaskCanvas = function () {
-    if (!mc) {
-      throw new Error('Need a mask canvas');
-    }
-
-    return {
-      ctx: mc,
-      canvas: mc,
+      ctx: o,
+      canvas: o,
       draw: function draw(ctx) {
         ctx.draw(true);
       }

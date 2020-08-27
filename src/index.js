@@ -6,6 +6,7 @@ karas.inject.requestAnimationFrame = function(cb) {
 
 class Root extends karas.Root {
   appendTo(ctx) {
+    this.__children = karas.builder.initRoot(this.__cd, this);
     this.__initProps();
     this.__refreshLevel = karas.level.REFLOW;
     this.__ctx = ctx;
@@ -94,36 +95,20 @@ karas.inject.isDom = function(o) {
   return o && karas.util.isFunction(o.arc);
 }
 
-let cc, mc;
+const CANVAS = {};
 
-karas.inject.setCacheCanvas = function(o) {
-  cc = o;
+karas.inject.setCacheCanvas = function(k, v) {
+  CANVAS[k] = v;
 };
 
-karas.inject.setMaskCanvas = function(o) {
-  mc = o;
-};
-
-karas.inject.getCacheCanvas = function() {
-  if(!cc) {
+karas.inject.getCacheCanvas = function(key = '__$$cache$$__') {
+  if(!CANVAS[key]) {
     throw new Error('Need a cache canvas');
   }
+  let o = CANVAS[key];
   return {
-    ctx: cc,
-    canvas: cc,
-    draw(ctx) {
-      ctx.draw(true);
-    },
-  };
-};
-
-karas.inject.getMaskCanvas = function() {
-  if(!mc) {
-    throw new Error('Need a mask canvas');
-  }
-  return {
-    ctx: mc,
-    canvas: mc,
+    ctx: o,
+    canvas: o,
     draw(ctx) {
       ctx.draw(true);
     },
