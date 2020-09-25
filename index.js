@@ -135,7 +135,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.38.0";
+  var version = "0.38.1";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
@@ -159,7 +159,8 @@
 
         this.__initProps();
 
-        this.__refreshLevel = karas.level.REFLOW;
+        this.__root = this;
+        this.__refreshLevel = karas.animate.level.REFLOW;
         this.__ctx = ctx;
         this.__renderMode = karas.mode.CANVAS;
         this.__defs = {

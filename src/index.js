@@ -9,7 +9,8 @@ class Root extends karas.Root {
   appendTo(ctx) {
     this.__children = karas.builder.initRoot(this.__cd, this);
     this.__initProps();
-    this.__refreshLevel = karas.level.REFLOW;
+    this.__root = this;
+    this.__refreshLevel = karas.animate.level.REFLOW;
     this.__ctx = ctx;
     this.__renderMode = karas.mode.CANVAS;
     this.__defs = {
