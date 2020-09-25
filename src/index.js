@@ -1,4 +1,5 @@
 import karas from 'karas';
+import { version } from '../package.json';
 
 karas.inject.requestAnimationFrame = function(cb) {
   setTimeout(cb, 1000 / 60);
@@ -114,5 +115,7 @@ karas.inject.getCacheCanvas = function(key = '__$$cache$$__') {
     },
   };
 };
+
+karas.myVersion = version;
 
 export default karas;

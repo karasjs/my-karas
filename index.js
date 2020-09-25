@@ -135,6 +135,8 @@
     return _get(target, property, receiver || target);
   }
 
+  var version = "0.38.0";
+
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
   };
@@ -281,6 +283,8 @@
       }
     };
   };
+
+  karas.myVersion = version;
 
   return karas;
 
