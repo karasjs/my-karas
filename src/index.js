@@ -5,6 +5,8 @@ karas.inject.requestAnimationFrame = function(cb) {
   setTimeout(cb, 1000 / 60);
 };
 
+const REFRESH = karas.Event.REFRESH_ASYNC = 'refresh-async';
+
 class Root extends karas.Root {
   appendTo(ctx) {
     this.__children = karas.builder.initRoot(this.__cd, this);
@@ -23,8 +25,10 @@ class Root extends karas.Root {
     let ctx = this.ctx;
 
     function wrap() {
-      ctx.draw(true);
-      cb && cb();
+      ctx.draw(true, function() {
+        this.emit(REFRESH);
+        cb && cb();
+      });
     }
 
     super.refresh(wrap);

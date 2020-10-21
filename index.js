@@ -135,11 +135,13 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.38.1";
+  var version = "0.38.2";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
   };
+
+  var REFRESH = karas.Event.REFRESH_ASYNC = 'refresh-async';
 
   var Root = /*#__PURE__*/function (_karas$Root) {
     _inherits(Root, _karas$Root);
@@ -174,8 +176,10 @@
         var ctx = this.ctx;
 
         function wrap() {
-          ctx.draw(true);
-          cb && cb();
+          ctx.draw(true, function () {
+            this.emit(REFRESH);
+            cb && cb();
+          });
         }
 
         _get(_getPrototypeOf(Root.prototype), "refresh", this).call(this, wrap);
