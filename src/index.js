@@ -22,11 +22,12 @@ class Root extends karas.Root {
   }
 
   refresh(cb) {
-    let ctx = this.ctx;
+    let self = this;
+    let ctx = self.ctx;
 
     function wrap() {
       ctx.draw(true, function() {
-        this.emit(REFRESH);
+        self.emit(REFRESH);
         cb && cb();
       });
     }

@@ -135,7 +135,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.38.2";
+  var version = "0.38.3";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
@@ -173,11 +173,12 @@
     }, {
       key: "refresh",
       value: function refresh(cb) {
-        var ctx = this.ctx;
+        var self = this;
+        var ctx = self.ctx;
 
         function wrap() {
           ctx.draw(true, function () {
-            this.emit(REFRESH);
+            self.emit(REFRESH);
             cb && cb();
           });
         }
