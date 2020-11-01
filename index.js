@@ -135,7 +135,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.38.3";
+  var version = "0.40.0";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
