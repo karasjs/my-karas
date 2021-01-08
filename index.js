@@ -135,7 +135,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.40.0";
+  var version = "0.38.4";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
@@ -273,8 +273,8 @@
     CANVAS[k] = v;
   };
 
-  karas.inject.getCacheCanvas = function () {
-    var key = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '__$$cache$$__';
+  karas.inject.getCacheCanvas = function (w, h) {
+    var key = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '__$$cache$$__';
 
     if (!CANVAS[key]) {
       throw new Error('Need a cache canvas');

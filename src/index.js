@@ -108,7 +108,7 @@ karas.inject.setCacheCanvas = function(k, v) {
   CANVAS[k] = v;
 };
 
-karas.inject.getCacheCanvas = function(key = '__$$cache$$__') {
+karas.inject.getCacheCanvas = function(w, h, key = '__$$cache$$__') {
   if(!CANVAS[key]) {
     throw new Error('Need a cache canvas');
   }
