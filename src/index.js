@@ -12,16 +12,17 @@ class Root extends karas.Root {
     this.__children = karas.builder.initRoot(this.__cd, this);
     this.__initProps();
     this.__root = this;
-    this.__refreshLevel = karas.animate.level.REFLOW;
+    this.cache = !!this.props.cache;
+    this.__refreshLevel = karas.refresh.level.REFLOW;
     this.__ctx = ctx;
     this.__renderMode = karas.mode.CANVAS;
     this.__defs = {
       clear() {},
     };
-    this.refresh();
+    this.refresh(null, true);
   }
 
-  refresh(cb) {
+  refresh(cb, isFirst) {
     let self = this;
     let ctx = self.ctx;
 
@@ -32,7 +33,7 @@ class Root extends karas.Root {
       });
     }
 
-    super.refresh(wrap);
+    super.refresh(wrap, isFirst);
   }
 }
 
@@ -103,23 +104,67 @@ karas.inject.isDom = function(o) {
 }
 
 const CANVAS = {};
+const CANVAS_LIST = [];
+const WEBGL_LIST = [];
 
-karas.inject.setCacheCanvas = function(k, v) {
-  CANVAS[k] = v;
-};
-
-karas.inject.getCacheCanvas = function(w, h, key = '__$$cache$$__') {
-  if(!CANVAS[key]) {
-    throw new Error('Need a cache canvas');
+function cache(key, width, height, hash, message) {
+  let o;
+  if(!key) {
+    let target = hash === CANVAS ? CANVAS_LIST : WEBGL_LIST;
+    if(target.length) {
+      o = target.pop();
+    }
+    else {
+      o = my._createOffscreenCanvas(width, height);
+    }
   }
-  let o = CANVAS[key];
+  else if(!hash[key]) {
+    o = hash[key] = my._createOffscreenCanvas(width, height);
+  }
+  else {
+    o = hash[key];
+  }
+  o.width = width;
+  o.height = height;
   return {
-    ctx: o,
     canvas: o,
-    draw(ctx) {
-      ctx.draw(true);
+    ctx: hash === CANVAS ? o.getContext('2d')
+      : (o.getContext('webgl') || o.getContext('experimental-webgl')),
+    draw() {
+      // 空函数，仅对小程序提供hook特殊处理，flush缓冲
+    },
+    available: true,
+    release() {
+      if(hash === CANVAS) {
+        CANVAS_LIST.push(this.canvas);
+      }
+      else {
+        WEBGL_LIST.push(this.canvas);
+      }
+      this.canvas = null;
+      this.ctx = null;
     },
   };
+}
+
+function cacheCanvas(key, width, height, message) {
+  return cache(key, width, height, CANVAS, message);
+}
+
+karas.inject.hasCacheCanvas = function(key) {
+  return key && CANVAS.hasOwnProperty(key);
+};
+
+karas.inject.getCacheCanvas = function(width, height, key, message) {
+  return cacheCanvas(key, width, height, message);
+};
+
+karas.inject.releaseCacheCanvas = function(o) {
+  CANVAS_LIST.push(o);
+};
+
+karas.inject.delCacheCanvas = function(key) {
+  key && delete CANVAS[key];
 };
 
 karas.myVersion = version;

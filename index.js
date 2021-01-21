@@ -135,7 +135,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.38.4";
+  var version = "0.49.0";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
@@ -162,17 +162,18 @@
         this.__initProps();
 
         this.__root = this;
-        this.__refreshLevel = karas.animate.level.REFLOW;
+        this.cache = !!this.props.cache;
+        this.__refreshLevel = karas.refresh.level.REFLOW;
         this.__ctx = ctx;
         this.__renderMode = karas.mode.CANVAS;
         this.__defs = {
           clear: function clear() {}
         };
-        this.refresh();
+        this.refresh(null, true);
       }
     }, {
       key: "refresh",
-      value: function refresh(cb) {
+      value: function refresh(cb, isFirst) {
         var self = this;
         var ctx = self.ctx;
 
@@ -183,7 +184,7 @@
           });
         }
 
-        _get(_getPrototypeOf(Root.prototype), "refresh", this).call(this, wrap);
+        _get(_getPrototypeOf(Root.prototype), "refresh", this).call(this, wrap, isFirst);
       }
     }]);
 
@@ -268,26 +269,65 @@
   };
 
   var CANVAS = {};
+  var CANVAS_LIST = [];
+  var WEBGL_LIST = [];
 
-  karas.inject.setCacheCanvas = function (k, v) {
-    CANVAS[k] = v;
-  };
+  function cache(key, width, height, hash, message) {
+    var o;
 
-  karas.inject.getCacheCanvas = function (w, h) {
-    var key = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '__$$cache$$__';
+    if (!key) {
+      var target = hash === CANVAS ? CANVAS_LIST : WEBGL_LIST;
 
-    if (!CANVAS[key]) {
-      throw new Error('Need a cache canvas');
+      if (target.length) {
+        o = target.pop();
+      } else {
+        o = my._createOffscreenCanvas(width, height);
+      }
+    } else if (!hash[key]) {
+      o = hash[key] = my._createOffscreenCanvas(width, height);
+    } else {
+      o = hash[key];
     }
 
-    var o = CANVAS[key];
+    o.width = width;
+    o.height = height;
     return {
-      ctx: o,
       canvas: o,
-      draw: function draw(ctx) {
-        ctx.draw(true);
+      ctx: hash === CANVAS ? o.getContext('2d') : o.getContext('webgl') || o.getContext('experimental-webgl'),
+      draw: function draw() {// 空函数，仅对小程序提供hook特殊处理，flush缓冲
+      },
+      available: true,
+      release: function release() {
+        if (hash === CANVAS) {
+          CANVAS_LIST.push(this.canvas);
+        } else {
+          WEBGL_LIST.push(this.canvas);
+        }
+
+        this.canvas = null;
+        this.ctx = null;
       }
     };
+  }
+
+  function cacheCanvas(key, width, height, message) {
+    return cache(key, width, height, CANVAS);
+  }
+
+  karas.inject.hasCacheCanvas = function (key) {
+    return key && CANVAS.hasOwnProperty(key);
+  };
+
+  karas.inject.getCacheCanvas = function (width, height, key, message) {
+    return cacheCanvas(key, width, height);
+  };
+
+  karas.inject.releaseCacheCanvas = function (o) {
+    CANVAS_LIST.push(o);
+  };
+
+  karas.inject.delCacheCanvas = function (key) {
+    key && delete CANVAS[key];
   };
 
   karas.myVersion = version;
