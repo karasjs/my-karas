@@ -5,8 +5,6 @@ karas.inject.requestAnimationFrame = function(cb) {
   setTimeout(cb, 1000 / 60);
 };
 
-const REFRESH = karas.Event.REFRESH_ASYNC = 'refresh-async';
-
 class Root extends karas.Root {
   appendTo(ctx) {
     this.__children = karas.builder.initRoot(this.__cd, this);
@@ -20,20 +18,6 @@ class Root extends karas.Root {
       clear() {},
     };
     this.refresh(null, true);
-  }
-
-  refresh(cb, isFirst) {
-    let self = this;
-    let ctx = self.ctx;
-
-    function wrap() {
-      ctx.draw(true, function() {
-        self.emit(REFRESH);
-        cb && cb();
-      });
-    }
-
-    super.refresh(wrap, isFirst);
   }
 }
 
@@ -52,15 +36,20 @@ const LOADING = karas.inject.LOADING;
 const LOADED = karas.inject.LOADED;
 
 karas.inject.measureImg = function(url, cb, optinos = {}) {
+  let { root, width = 0, height = 0 } = optinos;
+  let ctx = root.ctx;
   if(url.indexOf('data:') === 0) {
-    let { width = {}, height = {} } = optinos;
-    cb({
-      success: true,
-      width: width.value,
-      height: height.value,
-      url,
-      source: url,
-    });
+    let img = ctx.createImage();
+    img.onload = function() {
+      cb({
+        success: true,
+        width: width,
+        height: height,
+        url,
+        source: img,
+      });
+    };
+    img.src = url;
     return;
   }
   let cache = IMG[url] = IMG[url] || {
@@ -79,14 +68,18 @@ karas.inject.measureImg = function(url, cb, optinos = {}) {
     my.getImageInfo({
       src: url,
       success: function(res) {
-        cache.state = LOADED;
-        cache.success = true;
-        cache.width = res.width;
-        cache.height = res.height;
-        cache.source = url;
-        cache.url = url;
-        let list = cache.task.splice(0);
-        list.forEach(cb => cb(cache));
+        let img = ctx.createImage();
+        img.onload = function() {
+          cache.state = LOADED;
+          cache.success = true;
+          cache.width = res.width;
+          cache.height = res.height;
+          cache.source = img;
+          cache.url = url;
+          let list = cache.task.splice(0);
+          list.forEach(cb => cb(cache));
+        };
+        img.src = url;
       },
       fail: function() {
         cache.state = LOADED;

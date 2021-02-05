@@ -105,43 +105,11 @@
     };
   }
 
-  function _superPropBase(object, property) {
-    while (!Object.prototype.hasOwnProperty.call(object, property)) {
-      object = _getPrototypeOf(object);
-      if (object === null) break;
-    }
-
-    return object;
-  }
-
-  function _get(target, property, receiver) {
-    if (typeof Reflect !== "undefined" && Reflect.get) {
-      _get = Reflect.get;
-    } else {
-      _get = function _get(target, property, receiver) {
-        var base = _superPropBase(target, property);
-
-        if (!base) return;
-        var desc = Object.getOwnPropertyDescriptor(base, property);
-
-        if (desc.get) {
-          return desc.get.call(receiver);
-        }
-
-        return desc.value;
-      };
-    }
-
-    return _get(target, property, receiver || target);
-  }
-
-  var version = "0.49.0";
+  var version = "0.50.0";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
   };
-
-  var REFRESH = karas.Event.REFRESH_ASYNC = 'refresh-async';
 
   var Root = /*#__PURE__*/function (_karas$Root) {
     _inherits(Root, _karas$Root);
@@ -171,21 +139,6 @@
         };
         this.refresh(null, true);
       }
-    }, {
-      key: "refresh",
-      value: function refresh(cb, isFirst) {
-        var self = this;
-        var ctx = self.ctx;
-
-        function wrap() {
-          ctx.draw(true, function () {
-            self.emit(REFRESH);
-            cb && cb();
-          });
-        }
-
-        _get(_getPrototypeOf(Root.prototype), "refresh", this).call(this, wrap, isFirst);
-      }
     }]);
 
     return Root;
@@ -209,19 +162,27 @@
 
   karas.inject.measureImg = function (url, cb) {
     var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var root = optinos.root,
+        _optinos$width = optinos.width,
+        width = _optinos$width === void 0 ? 0 : _optinos$width,
+        _optinos$height = optinos.height,
+        height = _optinos$height === void 0 ? 0 : _optinos$height;
+    var ctx = root.ctx;
 
     if (url.indexOf('data:') === 0) {
-      var _optinos$width = optinos.width,
-          width = _optinos$width === void 0 ? {} : _optinos$width,
-          _optinos$height = optinos.height,
-          height = _optinos$height === void 0 ? {} : _optinos$height;
-      cb({
-        success: true,
-        width: width.value,
-        height: height.value,
-        url: url,
-        source: url
-      });
+      var img = ctx.createImage();
+
+      img.onload = function () {
+        cb({
+          success: true,
+          width: width,
+          height: height,
+          url: url,
+          source: img
+        });
+      };
+
+      img.src = url;
       return;
     }
 
@@ -240,16 +201,22 @@
       my.getImageInfo({
         src: url,
         success: function success(res) {
-          cache.state = LOADED;
-          cache.success = true;
-          cache.width = res.width;
-          cache.height = res.height;
-          cache.source = url;
-          cache.url = url;
-          var list = cache.task.splice(0);
-          list.forEach(function (cb) {
-            return cb(cache);
-          });
+          var img = ctx.createImage();
+
+          img.onload = function () {
+            cache.state = LOADED;
+            cache.success = true;
+            cache.width = res.width;
+            cache.height = res.height;
+            cache.source = img;
+            cache.url = url;
+            var list = cache.task.splice(0);
+            list.forEach(function (cb) {
+              return cb(cache);
+            });
+          };
+
+          img.src = url;
         },
         fail: function fail() {
           cache.state = LOADED;
