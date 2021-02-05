@@ -105,7 +105,7 @@
     };
   }
 
-  var version = "0.50.0";
+  var version = "0.51.0";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
