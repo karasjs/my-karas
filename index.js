@@ -105,7 +105,7 @@
     };
   }
 
-  var version = "0.51.1";
+  var version = "0.51.2";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
@@ -124,7 +124,14 @@
 
     _createClass(Root, [{
       key: "appendTo",
-      value: function appendTo(ctx) {
+      value: function appendTo(dom) {
+        if (karas.util.isFunction(dom.getContext)) {
+          this.__dom = dom;
+          this.__ctx = dom.getContext('2d');
+        } else {
+          this.__ctx = ctx;
+        }
+
         this.__children = karas.builder.initRoot(this.__cd, this);
 
         this.__initProps();
@@ -132,7 +139,6 @@
         this.__root = this;
         this.cache = !!this.props.cache;
         this.__refreshLevel = karas.refresh.level.REFLOW;
-        this.__ctx = ctx;
         this.__renderMode = karas.mode.CANVAS;
         this.__defs = {
           clear: function clear() {}

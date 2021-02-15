@@ -6,13 +6,19 @@ karas.inject.requestAnimationFrame = function(cb) {
 };
 
 class Root extends karas.Root {
-  appendTo(ctx) {
+  appendTo(dom) {
+    if(karas.util.isFunction(dom.getContext)) {
+      this.__dom = dom;
+      this.__ctx = dom.getContext('2d');
+    }
+    else {
+      this.__ctx = ctx;
+    }
     this.__children = karas.builder.initRoot(this.__cd, this);
     this.__initProps();
     this.__root = this;
     this.cache = !!this.props.cache;
     this.__refreshLevel = karas.refresh.level.REFLOW;
-    this.__ctx = ctx;
     this.__renderMode = karas.mode.CANVAS;
     this.__defs = {
       clear() {},
