@@ -12,7 +12,7 @@ class Root extends karas.Root {
       this.__ctx = dom.getContext('2d');
     }
     else {
-      this.__ctx = ctx;
+      this.__ctx = dom;
     }
     this.__children = karas.builder.initRoot(this.__cd, this);
     this.__initProps();

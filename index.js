@@ -105,7 +105,7 @@
     };
   }
 
-  var version = "0.51.2";
+  var version = "0.52.0";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
@@ -129,7 +129,7 @@
           this.__dom = dom;
           this.__ctx = dom.getContext('2d');
         } else {
-          this.__ctx = ctx;
+          this.__ctx = dom;
         }
 
         this.__children = karas.builder.initRoot(this.__cd, this);
