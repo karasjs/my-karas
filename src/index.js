@@ -8,6 +8,52 @@ karas.inject.requestAnimationFrame = function(cb) {
 const REFRESH = karas.Event.REFRESH_ASYNC = 'refresh-async';
 
 class Root extends karas.Root {
+  // 需要小程序内部监听事件手动调用
+  onEvent(e) {
+    this.__wrapEvent(e, data => {
+      this.__emitEvent(data);
+    });
+  }
+  __wrapEvent(e, cb) {
+    const { id } = this.ctx;
+    my.createSelectorQuery().select(`#${id}`).boundingClientRect().exec(ret => {
+      let x, y;
+
+      if (ret && ret[0] && e.detail) {
+        const { clientX, clientY, x: ox, y: oy } = e.detail;
+        const { left, top, width, height } = ret[0];
+        const { __scx, __scy } = this;
+
+        x = ox ?? clientX - left;
+        y = oy ?? clientY - top;
+
+        if (!karas.util.isNil(__scx)) {
+          x /= __scx;
+        } else {
+          x *= this.width / width;
+        }
+        if (!karas.util.isNil(__scy)) {
+          y /= __scy;
+        } else {
+          y *= this.height / height;
+        }
+      }
+      cb({
+        event: e,
+        stopPropagation() {
+          this.__stopPropagation = true;
+        },
+        stopImmediatePropagation() {
+          this.__stopPropagation = true;
+          this.__stopImmediatePropagation = true;
+        },
+        preventDefault() {},
+        x,
+        y,
+        __hasEmitted: false,
+      });
+    });
+  }
   appendTo(ctx) {
     this.__children = karas.builder.initRoot(this.__cd, this);
     this.__initProps();

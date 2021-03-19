@@ -65,7 +65,7 @@
     if (typeof Proxy === "function") return true;
 
     try {
-      Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+      Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
       return true;
     } catch (e) {
       return false;
@@ -89,11 +89,13 @@
   }
 
   function _createSuper(Derived) {
-    return function () {
+    var hasNativeReflectConstruct = _isNativeReflectConstruct();
+
+    return function _createSuperInternal() {
       var Super = _getPrototypeOf(Derived),
           result;
 
-      if (_isNativeReflectConstruct()) {
+      if (hasNativeReflectConstruct) {
         var NewTarget = _getPrototypeOf(this).constructor;
 
         result = Reflect.construct(Super, arguments, NewTarget);
@@ -155,6 +157,70 @@
     }
 
     _createClass(Root, [{
+      key: "onEvent",
+      value: // 需要小程序内部监听事件手动调用
+      function onEvent(e) {
+        var _this = this;
+
+        this.__wrapEvent(e, function (data) {
+          _this.__emitEvent(data);
+        });
+      }
+    }, {
+      key: "__wrapEvent",
+      value: function __wrapEvent(e, cb) {
+        var _this2 = this;
+
+        var id = this.ctx.id;
+        my.createSelectorQuery().select("#".concat(id)).boundingClientRect().exec(function (ret) {
+          var x, y;
+
+          if (ret && ret[0] && e.detail) {
+            var _e$detail = e.detail,
+                clientX = _e$detail.clientX,
+                clientY = _e$detail.clientY,
+                ox = _e$detail.x,
+                oy = _e$detail.y;
+            var _ret$ = ret[0],
+                left = _ret$.left,
+                top = _ret$.top,
+                width = _ret$.width,
+                height = _ret$.height;
+            var __scx = _this2.__scx,
+                __scy = _this2.__scy;
+            x = ox !== null && ox !== void 0 ? ox : clientX - left;
+            y = oy !== null && oy !== void 0 ? oy : clientY - top;
+
+            if (!karas.util.isNil(__scx)) {
+              x /= __scx;
+            } else {
+              x *= _this2.width / width;
+            }
+
+            if (!karas.util.isNil(__scy)) {
+              y /= __scy;
+            } else {
+              y *= _this2.height / height;
+            }
+          }
+
+          cb({
+            event: e,
+            stopPropagation: function stopPropagation() {
+              this.__stopPropagation = true;
+            },
+            stopImmediatePropagation: function stopImmediatePropagation() {
+              this.__stopPropagation = true;
+              this.__stopImmediatePropagation = true;
+            },
+            preventDefault: function preventDefault() {},
+            x: x,
+            y: y,
+            __hasEmitted: false
+          });
+        });
+      }
+    }, {
       key: "appendTo",
       value: function appendTo(ctx) {
         this.__children = karas.builder.initRoot(this.__cd, this);
