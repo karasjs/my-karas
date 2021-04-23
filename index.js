@@ -159,6 +159,7 @@
           this.__dom = dom;
           this.__ctx = dom.getContext('2d');
         } else {
+          this.__dom = {};
           this.__ctx = dom;
         }
 
