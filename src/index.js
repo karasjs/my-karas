@@ -25,6 +25,17 @@ class Root extends karas.Root {
     };
     this.refresh(null, true);
   }
+
+  refresh(cb, isFirst) {
+    let self = this;
+    let ctx = self.ctx;
+
+    function wrap() {
+      ctx.draw && ctx.draw(true);
+    }
+
+    super.refresh(wrap, isFirst);
+  }
 }
 
 // Root引用指过来

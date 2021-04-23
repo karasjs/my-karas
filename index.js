@@ -105,7 +105,37 @@
     };
   }
 
-  var version = "0.56.0";
+  function _superPropBase(object, property) {
+    while (!Object.prototype.hasOwnProperty.call(object, property)) {
+      object = _getPrototypeOf(object);
+      if (object === null) break;
+    }
+
+    return object;
+  }
+
+  function _get(target, property, receiver) {
+    if (typeof Reflect !== "undefined" && Reflect.get) {
+      _get = Reflect.get;
+    } else {
+      _get = function _get(target, property, receiver) {
+        var base = _superPropBase(target, property);
+
+        if (!base) return;
+        var desc = Object.getOwnPropertyDescriptor(base, property);
+
+        if (desc.get) {
+          return desc.get.call(receiver);
+        }
+
+        return desc.value;
+      };
+    }
+
+    return _get(target, property, receiver || target);
+  }
+
+  var version = "0.57.0";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
@@ -144,6 +174,18 @@
           clear: function clear() {}
         };
         this.refresh(null, true);
+      }
+    }, {
+      key: "refresh",
+      value: function refresh(cb, isFirst) {
+        var self = this;
+        var ctx = self.ctx;
+
+        function wrap() {
+          ctx.draw && ctx.draw(true);
+        }
+
+        _get(_getPrototypeOf(Root.prototype), "refresh", this).call(this, wrap, isFirst);
       }
     }]);
 
