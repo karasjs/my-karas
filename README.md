@@ -5,6 +5,7 @@ A karas runtime on Alipay.
 
 ## INSTALL
 ```
+npm install karas
 npm install my-karas
 ```
 
