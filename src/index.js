@@ -1,13 +1,74 @@
 import karas from 'karas';
 import { version } from '../package.json';
+import { isFunction } from './util';
+import injectCanvas1 from './canvas1';
+import injectCanvas2 from './canvas2';
 
 karas.inject.requestAnimationFrame = function(cb) {
   setTimeout(cb, 1000 / 60);
 };
 
+karas.myVersion = version;
+
 class Root extends karas.Root {
+  static __isCanvas2 = false;
+
+  // 需要小程序内部监听事件手动调用
+  onEvent(e) {
+    this.__wrapEvent(e, data => {
+      this.__emitEvent(data);
+    });
+  }
+
+  __wrapEvent(e, cb) {
+    const id = this.__ctx?.id || this.__dom?.id;
+    id && my.createSelectorQuery().select(`#${id}`).boundingClientRect().exec(ret => {
+      let x, y;
+
+      if(ret && ret[0] && e.detail) {
+        const { clientX, clientY, x: ox, y: oy } = e.detail;
+        const { left, top, width, height } = ret[0];
+        const { __scx, __scy } = this;
+
+        x = ox ?? clientX - left;
+        y = oy ?? clientY - top;
+
+        if(!karas.util.isNil(__scx)) {
+          x /= __scx;
+        }
+        else {
+          x *= this.width / width;
+        }
+        if(!karas.util.isNil(__scy)) {
+          y /= __scy;
+        }
+        else {
+          y *= this.height / height;
+        }
+      }
+      cb({
+        event: e,
+        stopPropagation() {
+          this.__stopPropagation = true;
+        },
+        stopImmediatePropagation() {
+          this.__stopPropagation = true;
+          this.__stopImmediatePropagation = true;
+        },
+        preventDefault() {
+        },
+        x,
+        y,
+        __hasEmitted: false,
+      });
+    });
+  }
+
   appendTo(dom) {
-    if(karas.util.isFunction(dom.getContext)) {
+    if(isFunction(dom.getContext)) {
+      if(Root.__isCanvas2) {
+        karas.inject.requestAnimationFrame = dom.requestAnimationFrame.bind(dom) || karas.inject.requestAnimationFrame;
+      }
       this.__dom = dom;
       this.__ctx = dom.getContext('2d');
     }
@@ -22,163 +83,28 @@ class Root extends karas.Root {
     this.__refreshLevel = karas.refresh.level.REFLOW;
     this.__renderMode = karas.mode.CANVAS;
     this.__defs = {
-      clear() {},
+      clear() {
+      },
     };
     this.refresh(null, true);
   }
-
-  refresh(cb, isFirst) {
-    let self = this;
-    let ctx = self.ctx;
-
-    function wrap() {
-      ctx.draw && ctx.draw(true);
-    }
-
-    super.refresh(wrap, isFirst);
-  }
 }
 
-// Root引用指过来
-let createVd = karas.createVd;
-karas.createVd = function(tagName, props, children) {
-  if(['canvas', 'svg'].indexOf(tagName) > -1) {
-    return new Root(tagName, props, children);
-  }
-  return createVd(tagName, props, children);
-};
+const createVd = karas.createVd;
 
-const IMG = karas.inject.IMG;
-const INIT = karas.inject.INIT;
-const LOADING = karas.inject.LOADING;
-const LOADED = karas.inject.LOADED;
+let injected = false;
+injectCanvas1(karas, createVd, Root);
 
-karas.inject.measureImg = function(url, cb, optinos = {}) {
-  let { root, width = 0, height = 0 } = optinos;
-  let ctx = root.ctx;
-  if(url.indexOf('data:') === 0) {
-    let img = ctx.createImage();
-    img.onload = function() {
-      cb({
-        success: true,
-        width: width,
-        height: height,
-        url,
-        source: img,
-      });
-    };
-    img.src = url;
+export function setCanvasType(type) {
+  // 只允许注入一次
+  if(injected) {
     return;
   }
-  let cache = IMG[url] = IMG[url] || {
-    state: INIT,
-    task: [],
-  };
-  if(cache.state === LOADED) {
-    cb(cache);
+  injected = true;
+  if(type === 'canvas2') {
+    Root.__isCanvas2 = true;
+    injectCanvas2(karas, createVd, Root);
   }
-  else if(cache.state === LOADING) {
-    cache.task.push(cb);
-  }
-  else {
-    cache.state = LOADING;
-    cache.task.push(cb);
-    my.getImageInfo({
-      src: url,
-      success: function(res) {
-        let createImage = ctx.createImage || ctx.canvas.createImage;
-        let img = createImage();
-        img.onload = function() {
-          cache.state = LOADED;
-          cache.success = true;
-          cache.width = res.width;
-          cache.height = res.height;
-          cache.source = img;
-          cache.url = url;
-          let list = cache.task.splice(0);
-          list.forEach(cb => cb(cache));
-        };
-        img.src = url;
-      },
-      fail: function() {
-        cache.state = LOADED;
-        cache.success = false;
-        cache.url = url;
-        let list = cache.task.splice(0);
-        list.forEach(cb => cb(cache));
-      },
-    });
-  }
-};
-
-karas.inject.isDom = function(o) {
-  return o && karas.util.isFunction(o.arc);
 }
-
-const CANVAS = {};
-const CANVAS_LIST = [];
-const WEBGL_LIST = [];
-
-function cache(key, width, height, hash, message) {
-  let o;
-  if(!key) {
-    let target = hash === CANVAS ? CANVAS_LIST : WEBGL_LIST;
-    if(target.length) {
-      o = target.pop();
-    }
-    else {
-      o = my._createOffscreenCanvas(width, height);
-    }
-  }
-  else if(!hash[key]) {
-    o = hash[key] = my._createOffscreenCanvas(width, height);
-  }
-  else {
-    o = hash[key];
-  }
-  o.width = width;
-  o.height = height;
-  return {
-    canvas: o,
-    ctx: hash === CANVAS ? o.getContext('2d')
-      : (o.getContext('webgl') || o.getContext('experimental-webgl')),
-    draw() {
-      // 空函数，仅对小程序提供hook特殊处理，flush缓冲
-    },
-    available: true,
-    release() {
-      if(hash === CANVAS) {
-        CANVAS_LIST.push(this.canvas);
-      }
-      else {
-        WEBGL_LIST.push(this.canvas);
-      }
-      this.canvas = null;
-      this.ctx = null;
-    },
-  };
-}
-
-function cacheCanvas(key, width, height, message) {
-  return cache(key, width, height, CANVAS, message);
-}
-
-karas.inject.hasCacheCanvas = function(key) {
-  return key && CANVAS.hasOwnProperty(key);
-};
-
-karas.inject.getCacheCanvas = function(width, height, key, message) {
-  return cacheCanvas(key, width, height, message);
-};
-
-karas.inject.releaseCacheCanvas = function(o) {
-  CANVAS_LIST.push(o);
-};
-
-karas.inject.delCacheCanvas = function(key) {
-  key && delete CANVAS[key];
-};
-
-karas.myVersion = version;
 
 export default karas;

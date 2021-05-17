@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('karas')) :
-  typeof define === 'function' && define.amd ? define(['karas'], factory) :
-  (global = global || self, global.karas = factory(global.karas));
-}(this, (function (karas) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('karas')) :
+  typeof define === 'function' && define.amd ? define(['exports', 'karas'], factory) :
+  (global = global || self, factory(global.karas = {}, global.karas));
+}(this, (function (exports, karas) { 'use strict';
 
   karas = karas && Object.prototype.hasOwnProperty.call(karas, 'default') ? karas['default'] : karas;
 
@@ -26,6 +26,21 @@
     if (protoProps) _defineProperties(Constructor.prototype, protoProps);
     if (staticProps) _defineProperties(Constructor, staticProps);
     return Constructor;
+  }
+
+  function _defineProperty(obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
   }
 
   function _inherits(subClass, superClass) {
@@ -137,9 +152,370 @@
 
   var version = "0.57.2";
 
+  var toString = {}.toString;
+  var isFunction = function isFunction(obj) {
+    return toString.call(obj) === '[object CallbackFunction]' || toString.call(obj) === '[object Function]';
+  };
+
+  var CANVAS = {};
+  function injectCanvas1(karas, createVd, Root) {
+    var newRoot = /*#__PURE__*/function (_Root) {
+      _inherits(newRoot, _Root);
+
+      var _super = _createSuper(newRoot);
+
+      function newRoot() {
+        _classCallCheck(this, newRoot);
+
+        return _super.apply(this, arguments);
+      }
+
+      _createClass(newRoot, [{
+        key: "refresh",
+        value: function refresh(cb, isFirst) {
+          var self = this;
+          var ctx = self.ctx;
+
+          function wrap() {
+            ctx.draw && ctx.draw(true);
+          }
+
+          _get(_getPrototypeOf(newRoot.prototype), "refresh", this).call(this, wrap, isFirst);
+        }
+      }]);
+
+      return newRoot;
+    }(Root);
+
+    karas.createVd = function (tagName, props, children) {
+      if (['canvas', 'svg'].indexOf(tagName) > -1) {
+        return new newRoot(tagName, props, children);
+      }
+
+      return createVd(tagName, props, children);
+    };
+
+    var IMG = karas.inject.IMG;
+    var INIT = karas.inject.INIT;
+    var LOADING = karas.inject.LOADING;
+    var LOADED = karas.inject.LOADED;
+
+    karas.inject.checkSupportFontFamily = function () {
+      return false;
+    };
+
+    karas.inject.measureImg = function (url, cb) {
+      var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+      if (url.indexOf('data:') === 0) {
+        var _optinos$width = optinos.width,
+            width = _optinos$width === void 0 ? {} : _optinos$width,
+            _optinos$height = optinos.height,
+            height = _optinos$height === void 0 ? {} : _optinos$height;
+        cb({
+          success: true,
+          width: width.value,
+          height: height.value,
+          url: url,
+          source: url
+        });
+        return;
+      }
+
+      var cache = IMG[url] = IMG[url] || {
+        state: INIT,
+        task: []
+      };
+
+      if (cache.state === LOADED) {
+        cb(cache);
+      } else if (cache.state === LOADING) {
+        cache.task.push(cb);
+      } else {
+        cache.state = LOADING;
+        cache.task.push(cb);
+        my.getImageInfo({
+          src: url,
+          success: function success(res) {
+            cache.state = LOADED;
+            cache.success = true;
+            cache.width = res.width;
+            cache.height = res.height;
+            cache.source = url;
+            cache.url = url;
+            var list = cache.task.splice(0);
+            list.forEach(function (cb) {
+              return cb(cache);
+            });
+          },
+          fail: function fail() {
+            cache.state = LOADED;
+            cache.success = false;
+            cache.url = url;
+            var list = cache.task.splice(0);
+            list.forEach(function (cb) {
+              return cb(cache);
+            });
+          }
+        });
+      }
+    };
+
+    karas.inject.isDom = function (o) {
+      return o && karas.util.isFunction(o.arc);
+    };
+
+    karas.inject.hasCacheCanvas = function (key) {
+      return key && CANVAS.hasOwnProperty(key);
+    };
+
+    karas.inject.getCacheCanvas = function (w, h, key, message) {
+      if (message) {
+        key = message;
+      } // console.log(message,CANVAS);
+
+
+      if (!CANVAS[key]) {
+        throw new Error('Need a cache canvas');
+      }
+
+      var o = CANVAS[key];
+      return {
+        ctx: o,
+        canvas: o,
+        draw: function draw() {
+          o.draw(true);
+        }
+      };
+    };
+
+    karas.inject.setCacheCanvas = function (k, v) {
+      CANVAS[k] = v;
+    };
+
+    karas.inject.releaseCacheCanvas = function (o) {
+    };
+
+    karas.inject.delCacheCanvas = function (key) {
+      key && delete CANVAS[key];
+    };
+  }
+
+  function injectCanvas2 () {
+    var Root = /*#__PURE__*/function (_karas$Root) {
+      _inherits(Root, _karas$Root);
+
+      var _super = _createSuper(Root);
+
+      function Root() {
+        _classCallCheck(this, Root);
+
+        return _super.apply(this, arguments);
+      }
+
+      _createClass(Root, [{
+        key: "appendTo",
+        value: function appendTo(dom) {
+          if (karas.util.isFunction(dom.getContext)) {
+            this.__dom = dom;
+            this.__ctx = dom.getContext('2d');
+          } else {
+            this.__dom = {};
+            this.__ctx = dom;
+          }
+
+          this.__children = karas.builder.initRoot(this.__cd, this);
+
+          this.__initProps();
+
+          this.__root = this;
+          this.cache = !!this.props.cache;
+          this.__refreshLevel = karas.refresh.level.REFLOW;
+          this.__renderMode = karas.mode.CANVAS;
+          this.__defs = {
+            clear: function clear() {}
+          };
+          this.refresh(null, true);
+        }
+      }, {
+        key: "refresh",
+        value: function refresh(cb, isFirst) {
+          var self = this;
+          var ctx = self.ctx;
+
+          function wrap() {
+            ctx.draw && ctx.draw(true);
+          }
+
+          _get(_getPrototypeOf(Root.prototype), "refresh", this).call(this, wrap, isFirst);
+        }
+      }]);
+
+      return Root;
+    }(karas.Root); // Root引用指过来
+
+
+    var createVd = karas.createVd;
+
+    karas.createVd = function (tagName, props, children) {
+      if (['canvas', 'svg'].indexOf(tagName) > -1) {
+        return new Root(tagName, props, children);
+      }
+
+      return createVd(tagName, props, children);
+    };
+
+    var IMG = karas.inject.IMG;
+    var INIT = karas.inject.INIT;
+    var LOADING = karas.inject.LOADING;
+    var LOADED = karas.inject.LOADED;
+
+    karas.inject.measureImg = function (url, cb) {
+      var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      var root = optinos.root,
+          _optinos$width = optinos.width,
+          width = _optinos$width === void 0 ? 0 : _optinos$width,
+          _optinos$height = optinos.height,
+          height = _optinos$height === void 0 ? 0 : _optinos$height;
+      var ctx = root.ctx;
+
+      if (url.indexOf('data:') === 0) {
+        var img = ctx.canvas.createImage();
+
+        img.onload = function () {
+          cb({
+            success: true,
+            width: width,
+            height: height,
+            url: url,
+            source: img
+          });
+        };
+
+        img.src = url;
+        return;
+      }
+
+      var cache = IMG[url] = IMG[url] || {
+        state: INIT,
+        task: []
+      };
+
+      if (cache.state === LOADED) {
+        cb(cache);
+      } else if (cache.state === LOADING) {
+        cache.task.push(cb);
+      } else {
+        cache.state = LOADING;
+        cache.task.push(cb);
+        my.getImageInfo({
+          src: url,
+          success: function success(res) {
+            var createImage = ctx.createImage || ctx.canvas.createImage;
+            var img = createImage();
+
+            img.onload = function () {
+              cache.state = LOADED;
+              cache.success = true;
+              cache.width = res.width;
+              cache.height = res.height;
+              cache.source = img;
+              cache.url = url;
+              var list = cache.task.splice(0);
+              list.forEach(function (cb) {
+                return cb(cache);
+              });
+            };
+
+            img.src = url;
+          },
+          fail: function fail() {
+            cache.state = LOADED;
+            cache.success = false;
+            cache.url = url;
+            var list = cache.task.splice(0);
+            list.forEach(function (cb) {
+              return cb(cache);
+            });
+          }
+        });
+      }
+    };
+
+    karas.inject.isDom = function (o) {
+      return o && karas.util.isFunction(o.arc);
+    };
+
+    var CANVAS = {};
+    var CANVAS_LIST = [];
+    var WEBGL_LIST = [];
+
+    function cache(key, width, height, hash, message) {
+      var o;
+
+      if (!key) {
+        var target = hash === CANVAS ? CANVAS_LIST : WEBGL_LIST;
+
+        if (target.length) {
+          o = target.pop();
+        } else {
+          o = my._createOffscreenCanvas(width, height);
+        }
+      } else if (!hash[key]) {
+        o = hash[key] = my._createOffscreenCanvas(width, height);
+      } else {
+        o = hash[key];
+      }
+
+      o.width = width;
+      o.height = height;
+      return {
+        canvas: o,
+        ctx: hash === CANVAS ? o.getContext('2d') : o.getContext('webgl') || o.getContext('experimental-webgl'),
+        draw: function draw() {// 空函数，仅对小程序提供hook特殊处理，flush缓冲
+        },
+        available: true,
+        release: function release() {
+          if (!key) {
+            if (hash === CANVAS) {
+              CANVAS_LIST.push(this.canvas);
+            } else {
+              WEBGL_LIST.push(this.canvas);
+            }
+          }
+
+          this.canvas = null;
+          this.ctx = null;
+        }
+      };
+    }
+
+    function cacheCanvas(key, width, height, message) {
+      return cache(key, width, height, CANVAS);
+    }
+
+    karas.inject.hasCacheCanvas = function (key) {
+      return key && CANVAS.hasOwnProperty(key);
+    };
+
+    karas.inject.getCacheCanvas = function (width, height, key, message) {
+      return cacheCanvas(key, width, height);
+    };
+
+    karas.inject.releaseCacheCanvas = function (o) {
+      CANVAS_LIST.push(o);
+    };
+
+    karas.inject.delCacheCanvas = function (key) {
+      key && delete CANVAS[key];
+    };
+  }
+
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
   };
+
+  karas.myVersion = version;
 
   var Root = /*#__PURE__*/function (_karas$Root) {
     _inherits(Root, _karas$Root);
@@ -153,9 +529,79 @@
     }
 
     _createClass(Root, [{
+      key: "onEvent",
+      // 需要小程序内部监听事件手动调用
+      value: function onEvent(e) {
+        var _this = this;
+
+        this.__wrapEvent(e, function (data) {
+          _this.__emitEvent(data);
+        });
+      }
+    }, {
+      key: "__wrapEvent",
+      value: function __wrapEvent(e, cb) {
+        var _this$__ctx,
+            _this$__dom,
+            _this2 = this;
+
+        var id = ((_this$__ctx = this.__ctx) === null || _this$__ctx === void 0 ? void 0 : _this$__ctx.id) || ((_this$__dom = this.__dom) === null || _this$__dom === void 0 ? void 0 : _this$__dom.id);
+        id && my.createSelectorQuery().select("#".concat(id)).boundingClientRect().exec(function (ret) {
+          var x, y;
+
+          if (ret && ret[0] && e.detail) {
+            var _e$detail = e.detail,
+                clientX = _e$detail.clientX,
+                clientY = _e$detail.clientY,
+                ox = _e$detail.x,
+                oy = _e$detail.y;
+            var _ret$ = ret[0],
+                left = _ret$.left,
+                top = _ret$.top,
+                width = _ret$.width,
+                height = _ret$.height;
+            var __scx = _this2.__scx,
+                __scy = _this2.__scy;
+            x = ox !== null && ox !== void 0 ? ox : clientX - left;
+            y = oy !== null && oy !== void 0 ? oy : clientY - top;
+
+            if (!karas.util.isNil(__scx)) {
+              x /= __scx;
+            } else {
+              x *= _this2.width / width;
+            }
+
+            if (!karas.util.isNil(__scy)) {
+              y /= __scy;
+            } else {
+              y *= _this2.height / height;
+            }
+          }
+
+          cb({
+            event: e,
+            stopPropagation: function stopPropagation() {
+              this.__stopPropagation = true;
+            },
+            stopImmediatePropagation: function stopImmediatePropagation() {
+              this.__stopPropagation = true;
+              this.__stopImmediatePropagation = true;
+            },
+            preventDefault: function preventDefault() {},
+            x: x,
+            y: y,
+            __hasEmitted: false
+          });
+        });
+      }
+    }, {
       key: "appendTo",
       value: function appendTo(dom) {
-        if (karas.util.isFunction(dom.getContext)) {
+        if (isFunction(dom.getContext)) {
+          if (Root.__isCanvas2) {
+            karas.inject.requestAnimationFrame = dom.requestAnimationFrame.bind(dom) || karas.inject.requestAnimationFrame;
+          }
+
           this.__dom = dom;
           this.__ctx = dom.getContext('2d');
         } else {
@@ -176,180 +622,34 @@
         };
         this.refresh(null, true);
       }
-    }, {
-      key: "refresh",
-      value: function refresh(cb, isFirst) {
-        var self = this;
-        var ctx = self.ctx;
-
-        function wrap() {
-          ctx.draw && ctx.draw(true);
-        }
-
-        _get(_getPrototypeOf(Root.prototype), "refresh", this).call(this, wrap, isFirst);
-      }
     }]);
 
     return Root;
-  }(karas.Root); // Root引用指过来
+  }(karas.Root);
 
+  _defineProperty(Root, "__isCanvas2", false);
 
   var createVd = karas.createVd;
-
-  karas.createVd = function (tagName, props, children) {
-    if (['canvas', 'svg'].indexOf(tagName) > -1) {
-      return new Root(tagName, props, children);
-    }
-
-    return createVd(tagName, props, children);
-  };
-
-  var IMG = karas.inject.IMG;
-  var INIT = karas.inject.INIT;
-  var LOADING = karas.inject.LOADING;
-  var LOADED = karas.inject.LOADED;
-
-  karas.inject.measureImg = function (url, cb) {
-    var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-    var root = optinos.root,
-        _optinos$width = optinos.width,
-        width = _optinos$width === void 0 ? 0 : _optinos$width,
-        _optinos$height = optinos.height,
-        height = _optinos$height === void 0 ? 0 : _optinos$height;
-    var ctx = root.ctx;
-
-    if (url.indexOf('data:') === 0) {
-      var img = ctx.createImage();
-
-      img.onload = function () {
-        cb({
-          success: true,
-          width: width,
-          height: height,
-          url: url,
-          source: img
-        });
-      };
-
-      img.src = url;
+  var injected = false;
+  injectCanvas1(karas, createVd, Root);
+  function setCanvasType(type) {
+    // 只允许注入一次
+    if (injected) {
       return;
     }
 
-    var cache = IMG[url] = IMG[url] || {
-      state: INIT,
-      task: []
-    };
+    injected = true;
 
-    if (cache.state === LOADED) {
-      cb(cache);
-    } else if (cache.state === LOADING) {
-      cache.task.push(cb);
-    } else {
-      cache.state = LOADING;
-      cache.task.push(cb);
-      my.getImageInfo({
-        src: url,
-        success: function success(res) {
-          var createImage = ctx.createImage || ctx.canvas.createImage;
-          var img = createImage();
-
-          img.onload = function () {
-            cache.state = LOADED;
-            cache.success = true;
-            cache.width = res.width;
-            cache.height = res.height;
-            cache.source = img;
-            cache.url = url;
-            var list = cache.task.splice(0);
-            list.forEach(function (cb) {
-              return cb(cache);
-            });
-          };
-
-          img.src = url;
-        },
-        fail: function fail() {
-          cache.state = LOADED;
-          cache.success = false;
-          cache.url = url;
-          var list = cache.task.splice(0);
-          list.forEach(function (cb) {
-            return cb(cache);
-          });
-        }
-      });
+    if (type === 'canvas2') {
+      Root.__isCanvas2 = true;
+      injectCanvas2();
     }
-  };
-
-  karas.inject.isDom = function (o) {
-    return o && karas.util.isFunction(o.arc);
-  };
-
-  var CANVAS = {};
-  var CANVAS_LIST = [];
-  var WEBGL_LIST = [];
-
-  function cache(key, width, height, hash, message) {
-    var o;
-
-    if (!key) {
-      var target = hash === CANVAS ? CANVAS_LIST : WEBGL_LIST;
-
-      if (target.length) {
-        o = target.pop();
-      } else {
-        o = my._createOffscreenCanvas(width, height);
-      }
-    } else if (!hash[key]) {
-      o = hash[key] = my._createOffscreenCanvas(width, height);
-    } else {
-      o = hash[key];
-    }
-
-    o.width = width;
-    o.height = height;
-    return {
-      canvas: o,
-      ctx: hash === CANVAS ? o.getContext('2d') : o.getContext('webgl') || o.getContext('experimental-webgl'),
-      draw: function draw() {// 空函数，仅对小程序提供hook特殊处理，flush缓冲
-      },
-      available: true,
-      release: function release() {
-        if (hash === CANVAS) {
-          CANVAS_LIST.push(this.canvas);
-        } else {
-          WEBGL_LIST.push(this.canvas);
-        }
-
-        this.canvas = null;
-        this.ctx = null;
-      }
-    };
   }
 
-  function cacheCanvas(key, width, height, message) {
-    return cache(key, width, height, CANVAS);
-  }
+  exports.default = karas;
+  exports.setCanvasType = setCanvasType;
 
-  karas.inject.hasCacheCanvas = function (key) {
-    return key && CANVAS.hasOwnProperty(key);
-  };
-
-  karas.inject.getCacheCanvas = function (width, height, key, message) {
-    return cacheCanvas(key, width, height);
-  };
-
-  karas.inject.releaseCacheCanvas = function (o) {
-    CANVAS_LIST.push(o);
-  };
-
-  karas.inject.delCacheCanvas = function (key) {
-    key && delete CANVAS[key];
-  };
-
-  karas.myVersion = version;
-
-  return karas;
+  Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 //# sourceMappingURL=index.js.map
