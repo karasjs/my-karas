@@ -86,7 +86,8 @@ karas.inject.measureImg = function(url, cb, optinos = {}) {
     my.getImageInfo({
       src: url,
       success: function(res) {
-        let img = ctx.createImage();
+        let createImage = ctx.createImage || ctx.canvas.createImage;
+        let img = createImage();
         img.onload = function() {
           cache.state = LOADED;
           cache.success = true;

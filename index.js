@@ -135,7 +135,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.57.1";
+  var version = "0.57.2";
 
   karas.inject.requestAnimationFrame = function (cb) {
     setTimeout(cb, 1000 / 60);
@@ -250,7 +250,8 @@
       my.getImageInfo({
         src: url,
         success: function success(res) {
-          var img = ctx.createImage();
+          var createImage = ctx.createImage || ctx.canvas.createImage;
+          var img = createImage();
 
           img.onload = function () {
             cache.state = LOADED;
