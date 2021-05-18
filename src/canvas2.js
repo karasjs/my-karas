@@ -1,9 +1,10 @@
 import karas from 'karas';
+import { isFunction } from './util';
 
 export default function() {
   class Root extends karas.Root {
     appendTo(dom) {
-      if(karas.util.isFunction(dom.getContext)) {
+      if(isFunction(dom.getContext)) {
         this.__dom = dom;
         this.__ctx = dom.getContext('2d');
       }
@@ -108,7 +109,7 @@ export default function() {
   };
 
   karas.inject.isDom = function(o) {
-    return o && karas.util.isFunction(o.arc);
+    return o && isFunction(o.arc);
   }
 
   const CANVAS = {};

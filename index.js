@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.57.2";
+  var version = "0.57.3";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -262,7 +262,7 @@
     };
 
     karas.inject.isDom = function (o) {
-      return o && karas.util.isFunction(o.arc);
+      return o && isFunction(o.arc);
     };
 
     karas.inject.hasCacheCanvas = function (key) {
@@ -316,7 +316,7 @@
       _createClass(Root, [{
         key: "appendTo",
         value: function appendTo(dom) {
-          if (karas.util.isFunction(dom.getContext)) {
+          if (isFunction(dom.getContext)) {
             this.__dom = dom;
             this.__ctx = dom.getContext('2d');
           } else {
@@ -443,7 +443,7 @@
     };
 
     karas.inject.isDom = function (o) {
-      return o && karas.util.isFunction(o.arc);
+      return o && isFunction(o.arc);
     };
 
     var CANVAS = {};

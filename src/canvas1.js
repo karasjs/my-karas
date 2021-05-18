@@ -1,3 +1,5 @@
+import { isFunction } from './util';
+
 const CANVAS = {};
 const CANVAS_LIST = [];
 
@@ -78,7 +80,7 @@ export default function injectCanvas1(karas, createVd, Root) {
   };
 
   karas.inject.isDom = function(o) {
-    return o && karas.util.isFunction(o.arc);
+    return o && isFunction(o.arc);
   }
 
   karas.inject.hasCacheCanvas = function(key) {

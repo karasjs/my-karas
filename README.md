@@ -17,7 +17,7 @@ npm install my-karas
 import karas from 'my-karas';
 
 Page({
-  onReady() {
+  onLoad() {
     my.createSelectorQuery()
       .select('#canvas')
       .boundingClientRect()
@@ -72,7 +72,7 @@ Page({
               'Hello world'
             ]
           },
-          canvas
+          canvas.getContext('2d')
         );
       },
     });
