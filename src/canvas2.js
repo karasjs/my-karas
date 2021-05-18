@@ -83,8 +83,7 @@ export default function() {
       my.getImageInfo({
         src: url,
         success: function(res) {
-          let createImage = ctx.createImage || ctx.canvas.createImage;
-          let img = createImage();
+          let img = ctx.canvas.createImage();
           img.onload = function() {
             cache.state = LOADED;
             cache.success = true;
@@ -109,7 +108,7 @@ export default function() {
   };
 
   karas.inject.isDom = function(o) {
-    return o && isFunction(o.arc);
+    return o && (isFunction(o.getContext) || isFunction(o.arc));
   }
 
   const CANVAS = {};

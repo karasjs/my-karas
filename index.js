@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.57.3";
+  var version = "0.57.5";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -262,7 +262,7 @@
     };
 
     karas.inject.isDom = function (o) {
-      return o && isFunction(o.arc);
+      return o && (isFunction(o.getContext) || isFunction(o.arc));
     };
 
     karas.inject.hasCacheCanvas = function (key) {
@@ -411,8 +411,7 @@
         my.getImageInfo({
           src: url,
           success: function success(res) {
-            var createImage = ctx.createImage || ctx.canvas.createImage;
-            var img = createImage();
+            var img = ctx.canvas.createImage();
 
             img.onload = function () {
               cache.state = LOADED;
@@ -443,7 +442,7 @@
     };
 
     karas.inject.isDom = function (o) {
-      return o && isFunction(o.arc);
+      return o && (isFunction(o.getContext) || isFunction(o.arc));
     };
 
     var CANVAS = {};

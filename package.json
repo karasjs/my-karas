@@ -1,6 +1,6 @@
 {
   "name": "my-karas",
-  "version": "0.57.3",
+  "version": "0.57.5",
   "description": "A karas runtime on Alipay.",
   "maintainers": [
     {
