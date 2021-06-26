@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.57.5";
+  var version = "0.58.0";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -174,10 +174,14 @@
         key: "refresh",
         value: function refresh(cb, isFirst) {
           var self = this;
-          var ctx = self.ctx;
+          var ctx = self.ctx; // 小程序bug，可能restore失败，刷新前手动restore下
+
+          ctx.restore();
 
           function wrap() {
-            ctx.draw && ctx.draw(true);
+            ctx.draw && ctx.draw(true, function () {
+              self.emit('myRefresh');
+            });
           }
 
           _get(_getPrototypeOf(newRoot.prototype), "refresh", this).call(this, wrap, isFirst);
@@ -336,15 +340,24 @@
             clear: function clear() {}
           };
           this.refresh(null, true);
+
+          if (this.__dom.__root) {
+            this.__dom.__root.destroy();
+          }
+
+          this.__dom.root = this;
         }
       }, {
         key: "refresh",
         value: function refresh(cb, isFirst) {
           var self = this;
           var ctx = self.ctx;
+          ctx.restore();
 
           function wrap() {
-            ctx.draw && ctx.draw(true);
+            ctx.draw && ctx.draw(true, function () {
+              self.emit('myRefresh');
+            });
           }
 
           _get(_getPrototypeOf(Root.prototype), "refresh", this).call(this, wrap, isFirst);
@@ -620,6 +633,12 @@
           clear: function clear() {}
         };
         this.refresh(null, true);
+
+        if (this.__dom.__root) {
+          this.__dom.__root.destroy();
+        }
+
+        this.__dom.root = this;
       }
     }]);
 

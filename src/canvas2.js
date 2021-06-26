@@ -22,14 +22,21 @@ export default function() {
         clear() {},
       };
       this.refresh(null, true);
+      if(this.__dom.__root) {
+        this.__dom.__root.destroy();
+      }
+      this.__dom.root = this;
     }
 
     refresh(cb, isFirst) {
       let self = this;
       let ctx = self.ctx;
+      ctx.restore();
 
       function wrap() {
-        ctx.draw && ctx.draw(true);
+        ctx.draw && ctx.draw(true, function() {
+          self.emit('myRefresh');
+        });
       }
 
       super.refresh(wrap, isFirst);

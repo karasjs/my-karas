@@ -8,9 +8,13 @@ export default function injectCanvas1(karas, createVd, Root) {
     refresh(cb, isFirst) {
       let self = this;
       let ctx = self.ctx;
+      // 小程序bug，可能restore失败，刷新前手动restore下
+      ctx.restore();
 
       function wrap() {
-        ctx.draw && ctx.draw(true);
+        ctx.draw && ctx.draw(true, function() {
+          self.emit('myRefresh');
+        });
       }
 
       super.refresh(wrap, isFirst);

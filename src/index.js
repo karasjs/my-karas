@@ -87,6 +87,10 @@ class Root extends karas.Root {
       },
     };
     this.refresh(null, true);
+    if(this.__dom.__root) {
+      this.__dom.__root.destroy();
+    }
+    this.__dom.root = this;
   }
 }
 
