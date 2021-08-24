@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.58.0";
+  var version = "0.58.1";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -266,7 +266,7 @@
     };
 
     karas.inject.isDom = function (o) {
-      return o && (isFunction(o.getContext) || isFunction(o.arc));
+      return o && (o.getContext || o.arc);
     };
 
     karas.inject.hasCacheCanvas = function (key) {
@@ -455,7 +455,7 @@
     };
 
     karas.inject.isDom = function (o) {
-      return o && (isFunction(o.getContext) || isFunction(o.arc));
+      return o && (o.getContext || o.arc);
     };
 
     var CANVAS = {};

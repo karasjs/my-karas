@@ -115,7 +115,7 @@ export default function() {
   };
 
   karas.inject.isDom = function(o) {
-    return o && (isFunction(o.getContext) || isFunction(o.arc));
+    return o && (o.getContext || o.arc);
   }
 
   const CANVAS = {};

@@ -84,7 +84,7 @@ export default function injectCanvas1(karas, createVd, Root) {
   };
 
   karas.inject.isDom = function(o) {
-    return o && (isFunction(o.getContext) || isFunction(o.arc));
+    return o && (o.getContext || o.arc);
   }
 
   karas.inject.hasCacheCanvas = function(key) {
