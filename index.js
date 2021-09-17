@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.58.1";
+  var version = "0.58.2";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -393,19 +393,19 @@
       var ctx = root.ctx;
 
       if (url.indexOf('data:') === 0) {
-        var img = ctx.canvas.createImage();
+        var _img = ctx.canvas.createImage();
 
-        img.onload = function () {
+        _img.onload = function () {
           cb({
             success: true,
             width: width,
             height: height,
             url: url,
-            source: img
+            source: _img
           });
         };
 
-        img.src = url;
+        _img.src = url;
         return;
       }
 
@@ -437,6 +437,7 @@
               list.forEach(function (cb) {
                 return cb(cache);
               });
+              img.onload = null;
             };
 
             img.src = url;
@@ -449,6 +450,7 @@
             list.forEach(function (cb) {
               return cb(cache);
             });
+            img.onload = null;
           }
         });
       }

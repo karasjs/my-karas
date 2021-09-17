@@ -100,6 +100,7 @@ export default function() {
             cache.url = url;
             let list = cache.task.splice(0);
             list.forEach(cb => cb(cache));
+            img.onload = null;
           };
           img.src = url;
         },
@@ -109,6 +110,7 @@ export default function() {
           cache.url = url;
           let list = cache.task.splice(0);
           list.forEach(cb => cb(cache));
+          img.onload = null;
         },
       });
     }
