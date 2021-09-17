@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.58.2";
+  var version = "0.58.3";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -403,6 +403,7 @@
             url: url,
             source: _img
           });
+          _img.onload = null;
         };
 
         _img.src = url;

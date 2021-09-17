@@ -70,6 +70,7 @@ export default function() {
           url,
           source: img,
         });
+        img.onload = null;
       };
       img.src = url;
       return;
