@@ -305,6 +305,154 @@
     };
   }
 
+  var CANVAS$1 = {};
+  function injectCanvas1$1(karas, createVd, Root) {
+    var newRoot = /*#__PURE__*/function (_Root) {
+      _inherits(newRoot, _Root);
+
+      var _super = _createSuper(newRoot);
+
+      function newRoot() {
+        _classCallCheck(this, newRoot);
+
+        return _super.apply(this, arguments);
+      }
+
+      _createClass(newRoot, [{
+        key: "refresh",
+        value: function refresh(cb, isFirst) {
+          var self = this;
+          var ctx = self.ctx; // 小程序bug，可能restore失败，刷新前手动restore下
+
+          ctx.restore();
+
+          function wrap() {
+            ctx.draw && ctx.draw(false, function () {
+              self.emit('myRefresh');
+            });
+          }
+
+          _get(_getPrototypeOf(newRoot.prototype), "refresh", this).call(this, wrap, isFirst);
+        }
+      }]);
+
+      return newRoot;
+    }(Root);
+
+    karas.createVd = function (tagName, props, children) {
+      if (['canvas', 'svg'].indexOf(tagName) > -1) {
+        return new newRoot(tagName, props, children);
+      }
+
+      return createVd(tagName, props, children);
+    };
+
+    var IMG = karas.inject.IMG;
+    var INIT = karas.inject.INIT;
+    var LOADING = karas.inject.LOADING;
+    var LOADED = karas.inject.LOADED;
+
+    karas.inject.checkSupportFontFamily = function () {
+      return false;
+    };
+
+    karas.inject.measureImg = function (url, cb) {
+      var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+      if (url.indexOf('data:') === 0) {
+        var _optinos$width = optinos.width,
+            width = _optinos$width === void 0 ? {} : _optinos$width,
+            _optinos$height = optinos.height,
+            height = _optinos$height === void 0 ? {} : _optinos$height;
+        cb({
+          success: true,
+          width: width.value,
+          height: height.value,
+          url: url,
+          source: url
+        });
+        return;
+      }
+
+      var cache = IMG[url] = IMG[url] || {
+        state: INIT,
+        task: []
+      };
+
+      if (cache.state === LOADED) {
+        cb(cache);
+      } else if (cache.state === LOADING) {
+        cache.task.push(cb);
+      } else {
+        cache.state = LOADING;
+        cache.task.push(cb);
+        my.getImageInfo({
+          src: url,
+          success: function success(res) {
+            cache.state = LOADED;
+            cache.success = true;
+            cache.width = res.width;
+            cache.height = res.height;
+            cache.source = url;
+            cache.url = url;
+            var list = cache.task.splice(0);
+            list.forEach(function (cb) {
+              return cb(cache);
+            });
+          },
+          fail: function fail() {
+            cache.state = LOADED;
+            cache.success = false;
+            cache.url = url;
+            var list = cache.task.splice(0);
+            list.forEach(function (cb) {
+              return cb(cache);
+            });
+          }
+        });
+      }
+    };
+
+    karas.inject.isDom = function (o) {
+      return o && (o.getContext || o.arc);
+    };
+
+    karas.inject.hasCacheCanvas = function (key) {
+      return key && CANVAS$1.hasOwnProperty(key);
+    };
+
+    karas.inject.getCacheCanvas = function (w, h, key, message) {
+      if (message) {
+        key = message;
+      } // console.log(message,CANVAS);
+
+
+      if (!CANVAS$1[key]) {
+        throw new Error('Need a cache canvas');
+      }
+
+      var o = CANVAS$1[key];
+      return {
+        ctx: o,
+        canvas: o,
+        draw: function draw() {
+          o.draw(false);
+        }
+      };
+    };
+
+    karas.inject.setCacheCanvas = function (k, v) {
+      CANVAS$1[k] = v;
+    };
+
+    karas.inject.releaseCacheCanvas = function (o) {
+    };
+
+    karas.inject.delCacheCanvas = function (key) {
+      key && delete CANVAS$1[key];
+    };
+  }
+
   function injectCanvas2 () {
     var Root = /*#__PURE__*/function (_karas$Root) {
       _inherits(Root, _karas$Root);
@@ -664,6 +812,9 @@
     if (type === 'canvas2') {
       Root.__isCanvas2 = true;
       injectCanvas2();
+    } else if (type === 'canvas1n') {
+      Root.__isCanvas1n = true;
+      injectCanvas1$1(karas, createVd, Root);
     }
   }
 

@@ -2,6 +2,7 @@ import karas from 'karas';
 import { version } from '../package.json';
 import { isFunction } from './util';
 import injectCanvas1 from './canvas1';
+import injectCanvas1n from './canvas1n';
 import injectCanvas2 from './canvas2';
 
 karas.inject.requestAnimationFrame = function(cb) {
@@ -108,6 +109,10 @@ export function setCanvasType(type) {
   if(type === 'canvas2') {
     Root.__isCanvas2 = true;
     injectCanvas2(karas, createVd, Root);
+  }
+  else if(type === 'canvas1n') {
+    Root.__isCanvas1n = true;
+    injectCanvas1n(karas, createVd, Root);
   }
 }
 
