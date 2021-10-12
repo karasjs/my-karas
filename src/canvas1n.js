@@ -10,7 +10,7 @@ export default function injectCanvas1(karas, createVd, Root) {
       ctx.restore();
 
       function wrap() {
-        ctx.draw && ctx.draw(true, function() {
+        ctx.draw && ctx.draw(false, function() {
           self.emit('myRefresh');
         });
       }
@@ -101,7 +101,7 @@ export default function injectCanvas1(karas, createVd, Root) {
       ctx: o,
       canvas: o,
       draw() {
-        o.draw(true);
+        o.draw(false);
       },
     };
   };
