@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.58.3";
+  var version = "0.62.0";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
