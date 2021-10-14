@@ -24,19 +24,6 @@ const IMG_COUNTER = {};
 
 export default function() {
   class Root extends karas.Root {
-    constructor(tagName, props, children) {
-      super(tagName, props, children);
-      let imgHash = {};
-      recursion(this, imgHash);
-      let imgList = [];
-      Object.keys(imgHash).forEach(url => {
-        imgList.push(url);
-        IMG_COUNTER[url] = IMG_COUNTER[url] || 0;
-        IMG_COUNTER[url]++;
-      });
-      this.__imgList = imgList;
-    }
-
     appendTo(dom) {
       if(dom && (dom.getContext || dom.arc)) {
         this.__dom = dom;
@@ -60,6 +47,16 @@ export default function() {
         this.__dom.__root.destroy();
       }
       this.__dom.root = this;
+      // 收集img
+      let imgHash = {};
+      recursion(this, imgHash);
+      let imgList = [];
+      Object.keys(imgHash).forEach(url => {
+        imgList.push(url);
+        IMG_COUNTER[url] = IMG_COUNTER[url] || 0;
+        IMG_COUNTER[url]++;
+      });
+      this.__imgList = imgList;
     }
 
     refresh(cb, isFirst) {
@@ -74,14 +71,16 @@ export default function() {
 
     __destroy() {
       super.__destroy();
-      this.__imgList.forEach(url => {
-        if(IMG_COUNTER[url]) {
-          IMG_COUNTER[url]--;
-        }
-        if(!IMG_COUNTER[url]) {
-          delete karas.inject.IMG[url];
-        }
-      });
+      if(Array.isArray(this.__imgList)) {
+        this.__imgList.forEach(url => {
+          if(IMG_COUNTER[url]) {
+            IMG_COUNTER[url]--;
+          }
+          if(!IMG_COUNTER[url]) {
+            delete karas.inject.IMG[url];
+          }
+        });
+      }
     }
   }
 
@@ -128,6 +127,7 @@ export default function() {
           let list = cache.task.splice(0);
           list.forEach(cb => cb(cache));
           img.onload = null;
+          img.onerror = null;
         };
         img.onerror = function() {
           cache.state = LOADED;
@@ -138,6 +138,7 @@ export default function() {
           let list = cache.task.splice(0);
           list.forEach(cb => cb(cache));
           img.onload = null;
+          img.onerror = null;
         };
         img.src = url;
         return;
@@ -156,6 +157,7 @@ export default function() {
             let list = cache.task.splice(0);
             list.forEach(cb => cb(cache));
             img.onload = null;
+            img.onerror = null;
           };
           img.onerror = function() {
             cache.state = LOADED;
@@ -166,6 +168,7 @@ export default function() {
             let list = cache.task.splice(0);
             list.forEach(cb => cb(cache));
             img.onload = null;
+            img.onerror = null;
           };
           img.src = url;
         },

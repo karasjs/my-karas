@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.62.2";
+  var version = "0.62.3";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -482,22 +482,10 @@
 
       var _super = _createSuper(Root);
 
-      function Root(tagName, props, children) {
-        var _this;
-
+      function Root() {
         _classCallCheck(this, Root);
 
-        _this = _super.call(this, tagName, props, children);
-        var imgHash = {};
-        recursion(_assertThisInitialized(_this), imgHash);
-        var imgList = [];
-        Object.keys(imgHash).forEach(function (url) {
-          imgList.push(url);
-          IMG_COUNTER[url] = IMG_COUNTER[url] || 0;
-          IMG_COUNTER[url]++;
-        });
-        _this.__imgList = imgList;
-        return _this;
+        return _super.apply(this, arguments);
       }
 
       _createClass(Root, [{
@@ -528,7 +516,17 @@
             this.__dom.__root.destroy();
           }
 
-          this.__dom.root = this;
+          this.__dom.root = this; // 收集img
+
+          var imgHash = {};
+          recursion(this, imgHash);
+          var imgList = [];
+          Object.keys(imgHash).forEach(function (url) {
+            imgList.push(url);
+            IMG_COUNTER[url] = IMG_COUNTER[url] || 0;
+            IMG_COUNTER[url]++;
+          });
+          this.__imgList = imgList;
         }
       }, {
         key: "refresh",
@@ -546,15 +544,17 @@
         value: function __destroy() {
           _get(_getPrototypeOf(Root.prototype), "__destroy", this).call(this);
 
-          this.__imgList.forEach(function (url) {
-            if (IMG_COUNTER[url]) {
-              IMG_COUNTER[url]--;
-            }
+          if (Array.isArray(this.__imgList)) {
+            this.__imgList.forEach(function (url) {
+              if (IMG_COUNTER[url]) {
+                IMG_COUNTER[url]--;
+              }
 
-            if (!IMG_COUNTER[url]) {
-              delete karas.inject.IMG[url];
-            }
-          });
+              if (!IMG_COUNTER[url]) {
+                delete karas.inject.IMG[url];
+              }
+            });
+          }
         }
       }]);
 
@@ -613,6 +613,7 @@
               return cb(cache);
             });
             img.onload = null;
+            img.onerror = null;
           };
 
           img.onerror = function () {
@@ -626,6 +627,7 @@
               return cb(cache);
             });
             img.onload = null;
+            img.onerror = null;
           };
 
           img.src = url;
@@ -649,6 +651,7 @@
                 return cb(cache);
               });
               img.onload = null;
+              img.onerror = null;
             };
 
             img.onerror = function () {
@@ -662,6 +665,7 @@
                 return cb(cache);
               });
               img.onload = null;
+              img.onerror = null;
             };
 
             img.src = url;
