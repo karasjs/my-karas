@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.62.0";
+  var version = "0.62.1";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -453,22 +453,37 @@
     };
   }
 
+  function recursion(dom, hash) {}
+
+  var IMG_COUNTER = {};
   function injectCanvas2 () {
     var Root = /*#__PURE__*/function (_karas$Root) {
       _inherits(Root, _karas$Root);
 
       var _super = _createSuper(Root);
 
-      function Root() {
+      function Root(tagName, props, children) {
+        var _this;
+
         _classCallCheck(this, Root);
 
-        return _super.apply(this, arguments);
+        _this = _super.call(this, tagName, props, children);
+        var imgHash = {};
+        recursion(_assertThisInitialized(_this));
+        var imgList = [];
+        Object.keys(imgHash).forEach(function (url) {
+          imgList.push(url);
+          IMG_COUNTER[url] = IMG_COUNTER[url] || 0;
+          IMG_COUNTER[url]++;
+        });
+        _this.__imgList = imgList;
+        return _this;
       }
 
       _createClass(Root, [{
         key: "appendTo",
         value: function appendTo(dom) {
-          if (isFunction(dom.getContext)) {
+          if (dom && (dom.getContext || dom.arc)) {
             this.__dom = dom;
             this.__ctx = dom.getContext('2d');
           } else {
@@ -499,16 +514,27 @@
         key: "refresh",
         value: function refresh(cb, isFirst) {
           var self = this;
-          var ctx = self.ctx;
-          ctx.restore();
 
           function wrap() {
-            ctx.draw && ctx.draw(true, function () {
-              self.emit('myRefresh');
-            });
+            self.emit('myRefresh');
           }
 
           _get(_getPrototypeOf(Root.prototype), "refresh", this).call(this, wrap, isFirst);
+        }
+      }, {
+        key: "__destroy",
+        value: function __destroy() {
+          _get(_getPrototypeOf(Root.prototype), "__destroy", this).call(this);
+
+          this.__imgList.forEach(function (url) {
+            if (IMG_COUNTER[url]) {
+              IMG_COUNTER[url]--;
+            }
+
+            if (!IMG_COUNTER[url]) {
+              delete karas.inject.IMG[url];
+            }
+          });
         }
       }]);
 
@@ -539,25 +565,6 @@
           _optinos$height = optinos.height,
           height = _optinos$height === void 0 ? 0 : _optinos$height;
       var ctx = root.ctx;
-
-      if (url.indexOf('data:') === 0) {
-        var _img = ctx.canvas.createImage();
-
-        _img.onload = function () {
-          cb({
-            success: true,
-            width: width,
-            height: height,
-            url: url,
-            source: _img
-          });
-          _img.onload = null;
-        };
-
-        _img.src = url;
-        return;
-      }
-
       var cache = IMG[url] = IMG[url] || {
         state: INIT,
         task: []
@@ -569,7 +576,42 @@
         cache.task.push(cb);
       } else {
         cache.state = LOADING;
-        cache.task.push(cb);
+        cache.task.push(cb); // base64特殊处理
+
+        if (url.indexOf('data:') === 0) {
+          var img = ctx.canvas.createImage();
+
+          img.onload = function () {
+            cache.state = LOADED;
+            cache.success = true;
+            cache.width = width;
+            cache.height = height;
+            cache.source = img;
+            cache.url = url;
+            var list = cache.task.splice(0);
+            list.forEach(function (cb) {
+              return cb(cache);
+            });
+            img.onload = null;
+          };
+
+          img.onerror = function () {
+            cache.state = LOADED;
+            cache.success = false;
+            cache.width = width;
+            cache.height = height;
+            cache.url = url;
+            var list = cache.task.splice(0);
+            list.forEach(function (cb) {
+              return cb(cache);
+            });
+            img.onload = null;
+          };
+
+          img.src = url;
+          return;
+        }
+
         my.getImageInfo({
           src: url,
           success: function success(res) {
@@ -589,6 +631,19 @@
               img.onload = null;
             };
 
+            img.onerror = function () {
+              cache.state = LOADED;
+              cache.success = false;
+              cache.width = res.width;
+              cache.height = res.height;
+              cache.url = url;
+              var list = cache.task.splice(0);
+              list.forEach(function (cb) {
+                return cb(cache);
+              });
+              img.onload = null;
+            };
+
             img.src = url;
           },
           fail: function fail() {
@@ -599,7 +654,6 @@
             list.forEach(function (cb) {
               return cb(cache);
             });
-            img.onload = null;
           }
         });
       }

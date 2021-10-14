@@ -1,10 +1,26 @@
 import karas from 'karas';
-import { isFunction } from './util';
+
+function recursion(dom, hash) {}
+
+const IMG_COUNTER = {};
 
 export default function() {
   class Root extends karas.Root {
+    constructor(tagName, props, children) {
+      super(tagName, props, children);
+      let imgHash = {};
+      recursion(this, imgHash);
+      let imgList = [];
+      Object.keys(imgHash).forEach(url => {
+        imgList.push(url);
+        IMG_COUNTER[url] = IMG_COUNTER[url] || 0;
+        IMG_COUNTER[url]++;
+      });
+      this.__imgList = imgList;
+    }
+
     appendTo(dom) {
-      if(isFunction(dom.getContext)) {
+      if(dom && (dom.getContext || dom.arc)) {
         this.__dom = dom;
         this.__ctx = dom.getContext('2d');
       }
@@ -30,16 +46,24 @@ export default function() {
 
     refresh(cb, isFirst) {
       let self = this;
-      let ctx = self.ctx;
-      ctx.restore();
 
       function wrap() {
-        ctx.draw && ctx.draw(true, function() {
-          self.emit('myRefresh');
-        });
+        self.emit('myRefresh');
       }
 
       super.refresh(wrap, isFirst);
+    }
+
+    __destroy() {
+      super.__destroy();
+      this.__imgList.forEach(url => {
+        if(IMG_COUNTER[url]) {
+          IMG_COUNTER[url]--;
+        }
+        if(!IMG_COUNTER[url]) {
+          delete karas.inject.IMG[url];
+        }
+      });
     }
   }
 
@@ -60,21 +84,6 @@ export default function() {
   karas.inject.measureImg = function(url, cb, optinos = {}) {
     let { root, width = 0, height = 0 } = optinos;
     let ctx = root.ctx;
-    if(url.indexOf('data:') === 0) {
-      let img = ctx.canvas.createImage();
-      img.onload = function() {
-        cb({
-          success: true,
-          width: width,
-          height: height,
-          url,
-          source: img,
-        });
-        img.onload = null;
-      };
-      img.src = url;
-      return;
-    }
     let cache = IMG[url] = IMG[url] || {
       state: INIT,
       task: [],
@@ -88,6 +97,33 @@ export default function() {
     else {
       cache.state = LOADING;
       cache.task.push(cb);
+      // base64特殊处理
+      if(url.indexOf('data:') === 0) {
+        let img = ctx.canvas.createImage();
+        img.onload = function() {
+          cache.state = LOADED;
+          cache.success = true;
+          cache.width = width;
+          cache.height = height;
+          cache.source = img;
+          cache.url = url;
+          let list = cache.task.splice(0);
+          list.forEach(cb => cb(cache));
+          img.onload = null;
+        };
+        img.onerror = function() {
+          cache.state = LOADED;
+          cache.success = false;
+          cache.width = width;
+          cache.height = height;
+          cache.url = url;
+          let list = cache.task.splice(0);
+          list.forEach(cb => cb(cache));
+          img.onload = null;
+        };
+        img.src = url;
+        return;
+      }
       my.getImageInfo({
         src: url,
         success: function(res) {
@@ -103,6 +139,16 @@ export default function() {
             list.forEach(cb => cb(cache));
             img.onload = null;
           };
+          img.onerror = function() {
+            cache.state = LOADED;
+            cache.success = false;
+            cache.width = res.width;
+            cache.height = res.height;
+            cache.url = url;
+            let list = cache.task.splice(0);
+            list.forEach(cb => cb(cache));
+            img.onload = null;
+          };
           img.src = url;
         },
         fail: function() {
@@ -111,7 +157,6 @@ export default function() {
           cache.url = url;
           let list = cache.task.splice(0);
           list.forEach(cb => cb(cache));
-          img.onload = null;
         },
       });
     }
