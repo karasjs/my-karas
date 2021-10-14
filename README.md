@@ -9,7 +9,7 @@ npm install karas
 npm install my-karas
 ```
 
-小程序目前有升级canvas2.0，所以出现了2种api，新版支持离屏功能，老版默认不行。新版在sdk2.7.0及以上支持。
+小程序目前有升级canvas2.0，以及native canvas1.0，所以出现了3种api，2.0新版支持离屏功能，老版默认不行。新版在sdk2.7.0及以上支持。
 
 ## Demo
 ```jsx
@@ -51,10 +51,39 @@ Page({
 });
 ```
 ```jsx
-// 新版
+// 新版2.0
 import karas from 'my-karas';
-// 2个版本api不一致，所以要多调用一次
+// 版本api不一致，所以要多调用一次
 setCanvasType('canvas2');
+
+Page({
+  onLoad() {
+    my._createCanvas({
+      id: 'canvas',
+      success: (canvas) => {
+        karas.parse(
+          {
+            tagName: 'canvas',
+            props: {
+              width: 360,
+              height: 360,
+            },
+            children: [
+              'Hello world'
+            ]
+          },
+          canvas.getContext('2d')
+        );
+      },
+    });
+  }
+});
+```
+```jsx
+// 1.0native
+import karas from 'my-karas';
+// 版本api不一致，所以要多调用一次
+setCanvasType('canvas1n');
 
 Page({
   onLoad() {
