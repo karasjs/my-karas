@@ -1,6 +1,24 @@
 import karas from 'karas';
 
-function recursion(dom, hash) {}
+function recursion(dom, hash) {
+  if(dom.tagName === 'img') {
+    if(dom.src) {
+      hash[dom.src] = true;
+    }
+  }
+  else if(Array.isArray(dom.children)) {
+    dom.children.forEach(item => {
+      recursion(item, hash);
+    });
+  }
+  let backgroundImage = dom.currentStyle[karas.enums.STYLE_KEY.BACKGROUND_IMAGE];
+  if(backgroundImage && /url/i.test(backgroundImage)) {
+    let url = /url(\([^)]+\))/.exec(backgroundImage);
+    if(url) {
+      hash[url[1]] = true;
+    }
+  }
+}
 
 const IMG_COUNTER = {};
 

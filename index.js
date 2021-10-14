@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.62.1";
+  var version = "0.62.2";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -453,7 +453,27 @@
     };
   }
 
-  function recursion(dom, hash) {}
+  function recursion(dom, hash) {
+    if (dom.tagName === 'img') {
+      if (dom.src) {
+        hash[dom.src] = true;
+      }
+    } else if (Array.isArray(dom.children)) {
+      dom.children.forEach(function (item) {
+        recursion(item, hash);
+      });
+    }
+
+    var backgroundImage = dom.currentStyle[karas.enums.STYLE_KEY.BACKGROUND_IMAGE];
+
+    if (backgroundImage && /url/i.test(backgroundImage)) {
+      var url = /url(\([^)]+\))/.exec(backgroundImage);
+
+      if (url) {
+        hash[url[1]] = true;
+      }
+    }
+  }
 
   var IMG_COUNTER = {};
   function injectCanvas2 () {
@@ -469,7 +489,7 @@
 
         _this = _super.call(this, tagName, props, children);
         var imgHash = {};
-        recursion(_assertThisInitialized(_this));
+        recursion(_assertThisInitialized(_this), imgHash);
         var imgList = [];
         Object.keys(imgHash).forEach(function (url) {
           imgList.push(url);
