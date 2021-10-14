@@ -56,12 +56,14 @@ import karas from 'my-karas';
 // 版本api不一致，所以要多调用一次
 setCanvasType('canvas2');
 
+let root;
+
 Page({
   onLoad() {
     my._createCanvas({
       id: 'canvas',
       success: (canvas) => {
-        karas.parse(
+        root = karas.parse(
           {
             tagName: 'canvas',
             props: {
@@ -76,6 +78,10 @@ Page({
         );
       },
     });
+  },
+  onUnload() {
+    // 2.0销毁记得手动调用destroy()
+    root && root.destroy();
   }
 });
 ```
