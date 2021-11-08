@@ -1,6 +1,6 @@
 {
   "name": "my-karas",
-  "version": "0.62.3",
+  "version": "0.62.4",
   "description": "A karas runtime on Alipay.",
   "maintainers": [
     {
@@ -30,6 +30,8 @@
     "webstorm-disable-index": "^1.2.0"
   },
   "main": "./index",
+  "browser": "./index.js",
+  "module": "./index.es.js",
   "engines": {
     "node": ">=10.0.0"
   },
