@@ -97,10 +97,11 @@ export default function() {
   const INIT = karas.inject.INIT;
   const LOADING = karas.inject.LOADING;
   const LOADED = karas.inject.LOADED;
+  const cacheDom = my._createOffscreenCanvas(1, 1);
 
   karas.inject.measureImg = function(url, cb, optinos = {}) {
-    let { root, width = 0, height = 0 } = optinos;
-    let ctx = root.ctx;
+    let { width = 0, height = 0 } = optinos;
+    
     let cache = IMG[url] = IMG[url] || {
       state: INIT,
       task: [],
@@ -116,7 +117,7 @@ export default function() {
       cache.task.push(cb);
       // base64特殊处理
       if(url.indexOf('data:') === 0) {
-        let img = ctx.canvas.createImage();
+        let img = cacheDom.createImage();
         img.onload = function() {
           cache.state = LOADED;
           cache.success = true;
@@ -146,7 +147,7 @@ export default function() {
       my.getImageInfo({
         src: url,
         success: function(res) {
-          let img = ctx.canvas.createImage();
+          let img = cacheDom.createImage();
           img.onload = function() {
             cache.state = LOADED;
             cache.success = true;
