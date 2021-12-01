@@ -150,7 +150,7 @@
     return _get(target, property, receiver || target);
   }
 
-  var version = "0.62.4";
+  var version = "0.62.5";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -753,7 +753,7 @@
   }
 
   karas.inject.requestAnimationFrame = function (cb) {
-    setTimeout(cb, 1000 / 60);
+    return setTimeout(cb, 1000 / 60);
   };
 
   karas.myVersion = version;

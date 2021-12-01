@@ -6,7 +6,7 @@ import injectCanvas1n from './canvas1n';
 import injectCanvas2 from './canvas2';
 
 karas.inject.requestAnimationFrame = function(cb) {
-  setTimeout(cb, 1000 / 60);
+  return setTimeout(cb, 1000 / 60);
 };
 
 karas.myVersion = version;
