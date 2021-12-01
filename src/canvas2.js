@@ -22,6 +22,8 @@ function recursion(dom, hash) {
 
 const IMG_COUNTER = {};
 
+let cacheDom;
+
 export default function() {
   class Root extends karas.Root {
     appendTo(dom) {
@@ -97,11 +99,14 @@ export default function() {
   const INIT = karas.inject.INIT;
   const LOADING = karas.inject.LOADING;
   const LOADED = karas.inject.LOADED;
-  const cacheDom = my._createOffscreenCanvas(1, 1);
+  if(!cacheDom) {
+    cacheDom = my._createOffscreenCanvas(1, 1);
+    karas.inject.requestAnimationFrame = cacheDom.requestAnimationFrame;
+  }
 
   karas.inject.measureImg = function(url, cb, optinos = {}) {
     let { width = 0, height = 0 } = optinos;
-    
+
     let cache = IMG[url] = IMG[url] || {
       state: INIT,
       task: [],

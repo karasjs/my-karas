@@ -144,7 +144,7 @@ function _get(target, property, receiver) {
   return _get(target, property, receiver || target);
 }
 
-var version = "0.62.5";
+var version = "0.62.6";
 
 var toString = {}.toString;
 var isFunction = function isFunction(obj) {
@@ -470,6 +470,7 @@ function recursion(dom, hash) {
 }
 
 var IMG_COUNTER = {};
+var cacheDom;
 function injectCanvas2 () {
   var Root = /*#__PURE__*/function (_karas$Root) {
     _inherits(Root, _karas$Root);
@@ -571,14 +572,17 @@ function injectCanvas2 () {
   var LOADING = karas.inject.LOADING;
   var LOADED = karas.inject.LOADED;
 
+  if (!cacheDom) {
+    cacheDom = my._createOffscreenCanvas(1, 1);
+    karas.inject.requestAnimationFrame = cacheDom.requestAnimationFrame;
+  }
+
   karas.inject.measureImg = function (url, cb) {
     var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-    var root = optinos.root,
-        _optinos$width = optinos.width,
+    var _optinos$width = optinos.width,
         width = _optinos$width === void 0 ? 0 : _optinos$width,
         _optinos$height = optinos.height,
         height = _optinos$height === void 0 ? 0 : _optinos$height;
-    var ctx = root.ctx;
     var cache = IMG[url] = IMG[url] || {
       state: INIT,
       task: []
@@ -593,7 +597,7 @@ function injectCanvas2 () {
       cache.task.push(cb); // base64特殊处理
 
       if (url.indexOf('data:') === 0) {
-        var img = ctx.canvas.createImage();
+        var img = cacheDom.createImage();
 
         img.onload = function () {
           cache.state = LOADED;
@@ -631,7 +635,7 @@ function injectCanvas2 () {
       my.getImageInfo({
         src: url,
         success: function success(res) {
-          var img = ctx.canvas.createImage();
+          var img = cacheDom.createImage();
 
           img.onload = function () {
             cache.state = LOADED;
