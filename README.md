@@ -60,7 +60,7 @@ let root;
 
 Page({
   onLoad() {
-    my._createCanvas({
+    my.createSelectorQuery({
       id: 'canvas',
       success: (canvas) => {
         root = karas.parse(
@@ -93,7 +93,7 @@ setCanvasType('canvas1n');
 
 Page({
   onLoad() {
-    my._createCanvas({
+    my.createSelectorQuery({
       id: 'canvas',
       success: (canvas) => {
         karas.parse(
