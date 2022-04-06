@@ -1,6 +1,6 @@
 {
   "name": "my-karas",
-  "version": "0.62.7",
+  "version": "0.72.0",
   "description": "A karas runtime on Alipay.",
   "maintainers": [
     {
@@ -17,7 +17,7 @@
     "url": "git://github.com/karasjs/my-karas.git"
   },
   "peerDependencies": {
-    "karas": "~0.62.6"
+    "karas": "~0.72.0"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",

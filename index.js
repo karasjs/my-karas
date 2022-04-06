@@ -160,7 +160,7 @@
     return _get.apply(this, arguments);
   }
 
-  var version = "0.62.7";
+  var version = "0.72.0";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
