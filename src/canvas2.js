@@ -100,7 +100,12 @@ export default function() {
   const LOADING = karas.inject.LOADING;
   const LOADED = karas.inject.LOADED;
   if(!cacheDom) {
-    cacheDom = my._createOffscreenCanvas(1, 1);
+    if(my.createOffscreenCanvas) {
+      cacheDom = my.createOffscreenCanvas(1, 1);
+    }
+    else {
+      cacheDom = my._createOffscreenCanvas(1, 1);
+    }
     karas.inject.requestAnimationFrame = cacheDom.requestAnimationFrame;
   }
 
@@ -205,11 +210,21 @@ export default function() {
         o = target.pop();
       }
       else {
-        o = my._createOffscreenCanvas(width, height);
+        if(my.createOffscreenCanvas) {
+          o = my.createOffscreenCanvas(width, height);
+        }
+        else {
+          o = my._createOffscreenCanvas(width, height);
+        }
       }
     }
     else if(!hash[key]) {
-      o = hash[key] = my._createOffscreenCanvas(width, height);
+      if(my.createOffscreenCanvas) {
+        o = hash[key] = my.createOffscreenCanvas(width, height);
+      }
+      else {
+        o = hash[key] = my._createOffscreenCanvas(width, height);
+      }
     }
     else {
       o = hash[key];

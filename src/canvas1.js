@@ -33,9 +33,9 @@ export default function injectCanvas1(karas, createVd, Root) {
 
   karas.inject.checkSupportFontFamily = () => false
 
-  karas.inject.measureImg = function(url, cb, optinos = {}) {
+  karas.inject.measureImg = function(url, cb, options = {}) {
     if(url.indexOf('data:') === 0) {
-      let { width = {}, height = {} } = optinos;
+      let { width = {}, height = {} } = options;
       cb({
         success: true,
         width: width.value,

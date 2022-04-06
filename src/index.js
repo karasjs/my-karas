@@ -80,7 +80,6 @@ class Root extends karas.Root {
     this.__children = karas.builder.initRoot(this.__cd, this);
     this.__initProps();
     this.__root = this;
-    this.cache = !!this.props.cache;
     this.__refreshLevel = karas.refresh.level.REFLOW;
     this.__renderMode = karas.mode.CANVAS;
     this.__defs = {

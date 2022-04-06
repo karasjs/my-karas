@@ -19,6 +19,9 @@ function _defineProperties(target, props) {
 function _createClass(Constructor, protoProps, staticProps) {
   if (protoProps) _defineProperties(Constructor.prototype, protoProps);
   if (staticProps) _defineProperties(Constructor, staticProps);
+  Object.defineProperty(Constructor, "prototype", {
+    writable: false
+  });
   return Constructor;
 }
 
@@ -49,6 +52,9 @@ function _inherits(subClass, superClass) {
       configurable: true
     }
   });
+  Object.defineProperty(subClass, "prototype", {
+    writable: false
+  });
   if (superClass) _setPrototypeOf(subClass, superClass);
 }
 
@@ -74,7 +80,7 @@ function _isNativeReflectConstruct() {
   if (typeof Proxy === "function") return true;
 
   try {
-    Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+    Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
     return true;
   } catch (e) {
     return false;
@@ -92,17 +98,21 @@ function _assertThisInitialized(self) {
 function _possibleConstructorReturn(self, call) {
   if (call && (typeof call === "object" || typeof call === "function")) {
     return call;
+  } else if (call !== void 0) {
+    throw new TypeError("Derived constructors may only return object or undefined");
   }
 
   return _assertThisInitialized(self);
 }
 
 function _createSuper(Derived) {
-  return function () {
+  var hasNativeReflectConstruct = _isNativeReflectConstruct();
+
+  return function _createSuperInternal() {
     var Super = _getPrototypeOf(Derived),
         result;
 
-    if (_isNativeReflectConstruct()) {
+    if (hasNativeReflectConstruct) {
       var NewTarget = _getPrototypeOf(this).constructor;
 
       result = Reflect.construct(Super, arguments, NewTarget);
@@ -123,7 +133,7 @@ function _superPropBase(object, property) {
   return object;
 }
 
-function _get(target, property, receiver) {
+function _get() {
   if (typeof Reflect !== "undefined" && Reflect.get) {
     _get = Reflect.get;
   } else {
@@ -134,17 +144,17 @@ function _get(target, property, receiver) {
       var desc = Object.getOwnPropertyDescriptor(base, property);
 
       if (desc.get) {
-        return desc.get.call(receiver);
+        return desc.get.call(arguments.length < 3 ? target : receiver);
       }
 
       return desc.value;
     };
   }
 
-  return _get(target, property, receiver || target);
+  return _get.apply(this, arguments);
 }
 
-var version = "0.62.6";
+var version = "0.62.7";
 
 var toString = {}.toString;
 var isFunction = function isFunction(obj) {
@@ -203,13 +213,13 @@ function injectCanvas1(karas, createVd, Root) {
   };
 
   karas.inject.measureImg = function (url, cb) {
-    var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
     if (url.indexOf('data:') === 0) {
-      var _optinos$width = optinos.width,
-          width = _optinos$width === void 0 ? {} : _optinos$width,
-          _optinos$height = optinos.height,
-          height = _optinos$height === void 0 ? {} : _optinos$height;
+      var _options$width = options.width,
+          width = _options$width === void 0 ? {} : _options$width,
+          _options$height = options.height,
+          height = _options$height === void 0 ? {} : _options$height;
       cb({
         success: true,
         width: width.value,
@@ -573,7 +583,12 @@ function injectCanvas2 () {
   var LOADED = karas.inject.LOADED;
 
   if (!cacheDom) {
-    cacheDom = my._createOffscreenCanvas(1, 1);
+    if (my.createOffscreenCanvas) {
+      cacheDom = my.createOffscreenCanvas(1, 1);
+    } else {
+      cacheDom = my._createOffscreenCanvas(1, 1);
+    }
+
     karas.inject.requestAnimationFrame = cacheDom.requestAnimationFrame;
   }
 
@@ -698,10 +713,18 @@ function injectCanvas2 () {
       if (target.length) {
         o = target.pop();
       } else {
-        o = my._createOffscreenCanvas(width, height);
+        if (my.createOffscreenCanvas) {
+          o = my.createOffscreenCanvas(width, height);
+        } else {
+          o = my._createOffscreenCanvas(width, height);
+        }
       }
     } else if (!hash[key]) {
-      o = hash[key] = my._createOffscreenCanvas(width, height);
+      if (my.createOffscreenCanvas) {
+        o = hash[key] = my.createOffscreenCanvas(width, height);
+      } else {
+        o = hash[key] = my._createOffscreenCanvas(width, height);
+      }
     } else {
       o = hash[key];
     }
@@ -769,8 +792,8 @@ var Root = /*#__PURE__*/function (_karas$Root) {
 
   _createClass(Root, [{
     key: "onEvent",
-    // 需要小程序内部监听事件手动调用
-    value: function onEvent(e) {
+    value: // 需要小程序内部监听事件手动调用
+    function onEvent(e) {
       var _this = this;
 
       this.__wrapEvent(e, function (data) {
@@ -853,7 +876,6 @@ var Root = /*#__PURE__*/function (_karas$Root) {
       this.__initProps();
 
       this.__root = this;
-      this.cache = !!this.props.cache;
       this.__refreshLevel = karas.refresh.level.REFLOW;
       this.__renderMode = karas.mode.CANVAS;
       this.__defs = {
