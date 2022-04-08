@@ -160,7 +160,7 @@
     return _get.apply(this, arguments);
   }
 
-  var version = "0.72.0";
+  var version = "0.72.1";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -893,7 +893,7 @@
           this.__dom.__root.destroy();
         }
 
-        this.__dom.root = this;
+        this.__dom.__root = this;
       }
     }]);
 
