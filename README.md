@@ -52,7 +52,7 @@ Page({
 ```
 ```jsx
 // 新版2.0
-import karas from 'my-karas';
+import karas, { setCanvasType } from 'my-karas';
 // 版本api不一致，所以要多调用一次
 setCanvasType('canvas2');
 
@@ -60,9 +60,11 @@ let root;
 
 Page({
   onLoad() {
-    my.createSelectorQuery({
-      id: 'canvas',
-      success: (canvas) => {
+    my.createSelectorQuery()
+      .select('#canvas')
+      .node()
+      .exec(res => {
+        const canvas = res[0].node;
         root = karas.parse(
           {
             tagName: 'canvas',
@@ -74,10 +76,9 @@ Page({
               'Hello world'
             ]
           },
-          canvas.getContext('2d')
+          canvas
         );
-      },
-    });
+      });
   },
   onUnload() {
     // 2.0销毁记得手动调用destroy()
@@ -87,16 +88,18 @@ Page({
 ```
 ```jsx
 // 1.0native
-import karas from 'my-karas';
+import karas, { setCanvasType } from 'my-karas';
 // 版本api不一致，所以要多调用一次
 setCanvasType('canvas1n');
 
 Page({
   onLoad() {
-    my.createSelectorQuery({
-      id: 'canvas',
-      success: (canvas) => {
-        karas.parse(
+    my.createSelectorQuery()
+      .select('#canvas')
+      .node()
+      .exec(res => {
+        const canvas = res[0].node;
+        root = karas.parse(
           {
             tagName: 'canvas',
             props: {
@@ -107,10 +110,9 @@ Page({
               'Hello world'
             ]
           },
-          canvas.getContext('2d')
+          canvas
         );
-      },
-    });
+      });
   }
 });
 ```

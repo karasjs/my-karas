@@ -22,17 +22,15 @@ function recursion(dom, hash) {
 
 const IMG_COUNTER = {};
 
-let cacheDom;
-
 export default function() {
   class Root extends karas.Root {
     appendTo(dom) {
-      if(dom && (dom.getContext || dom.arc)) {
+      if(dom && dom.getContext) {
         this.__dom = dom;
         this.__ctx = dom.getContext('2d');
       }
       else {
-        this.__dom = {};
+        this.__dom = dom.canvas;
         this.__ctx = dom;
       }
       this.__children = karas.builder.initRoot(this.__cd, this);
@@ -89,7 +87,7 @@ export default function() {
   // Root引用指过来
   let createVd = karas.createVd;
   karas.createVd = function(tagName, props, children) {
-    if(['canvas', 'svg'].indexOf(tagName) > -1) {
+    if(['canvas', 'svg', 'webgl'].indexOf(tagName) > -1) {
       return new Root(tagName, props, children);
     }
     return createVd(tagName, props, children);
@@ -99,18 +97,9 @@ export default function() {
   const INIT = karas.inject.INIT;
   const LOADING = karas.inject.LOADING;
   const LOADED = karas.inject.LOADED;
-  if(!cacheDom) {
-    if(my.createOffscreenCanvas) {
-      cacheDom = my.createOffscreenCanvas(1, 1);
-    }
-    else {
-      cacheDom = my._createOffscreenCanvas(1, 1);
-    }
-    karas.inject.requestAnimationFrame = cacheDom.requestAnimationFrame;
-  }
 
   karas.inject.measureImg = function(url, cb, optinos = {}) {
-    let { width = 0, height = 0 } = optinos;
+    let { width = 0, height = 0, ctx } = optinos;
 
     let cache = IMG[url] = IMG[url] || {
       state: INIT,
@@ -127,7 +116,7 @@ export default function() {
       cache.task.push(cb);
       // base64特殊处理
       if(url.indexOf('data:') === 0) {
-        let img = cacheDom.createImage();
+        let img = ctx.canvas.createImage();
         img.onload = function() {
           cache.state = LOADED;
           cache.success = true;
@@ -157,7 +146,7 @@ export default function() {
       my.getImageInfo({
         src: url,
         success: function(res) {
-          let img = cacheDom.createImage();
+          let img = ctx.canvas.createImage();
           img.onload = function() {
             cache.state = LOADED;
             cache.success = true;

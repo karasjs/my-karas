@@ -160,7 +160,7 @@
     return _get.apply(this, arguments);
   }
 
-  var version = "0.72.1";
+  var version = "0.72.2";
 
   var toString = {}.toString;
   var isFunction = function isFunction(obj) {
@@ -486,7 +486,6 @@
   }
 
   var IMG_COUNTER = {};
-  var cacheDom;
   function injectCanvas2 () {
     var Root = /*#__PURE__*/function (_karas$Root) {
       _inherits(Root, _karas$Root);
@@ -502,11 +501,11 @@
       _createClass(Root, [{
         key: "appendTo",
         value: function appendTo(dom) {
-          if (dom && (dom.getContext || dom.arc)) {
+          if (dom && dom.getContext) {
             this.__dom = dom;
             this.__ctx = dom.getContext('2d');
           } else {
-            this.__dom = {};
+            this.__dom = dom.canvas;
             this.__ctx = dom;
           }
 
@@ -576,7 +575,7 @@
     var createVd = karas.createVd;
 
     karas.createVd = function (tagName, props, children) {
-      if (['canvas', 'svg'].indexOf(tagName) > -1) {
+      if (['canvas', 'svg', 'webgl'].indexOf(tagName) > -1) {
         return new Root(tagName, props, children);
       }
 
@@ -588,22 +587,13 @@
     var LOADING = karas.inject.LOADING;
     var LOADED = karas.inject.LOADED;
 
-    if (!cacheDom) {
-      if (my.createOffscreenCanvas) {
-        cacheDom = my.createOffscreenCanvas(1, 1);
-      } else {
-        cacheDom = my._createOffscreenCanvas(1, 1);
-      }
-
-      karas.inject.requestAnimationFrame = cacheDom.requestAnimationFrame;
-    }
-
     karas.inject.measureImg = function (url, cb) {
       var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
       var _optinos$width = optinos.width,
           width = _optinos$width === void 0 ? 0 : _optinos$width,
           _optinos$height = optinos.height,
-          height = _optinos$height === void 0 ? 0 : _optinos$height;
+          height = _optinos$height === void 0 ? 0 : _optinos$height,
+          ctx = optinos.ctx;
       var cache = IMG[url] = IMG[url] || {
         state: INIT,
         task: []
@@ -618,7 +608,7 @@
         cache.task.push(cb); // base64特殊处理
 
         if (url.indexOf('data:') === 0) {
-          var img = cacheDom.createImage();
+          var img = ctx.canvas.createImage();
 
           img.onload = function () {
             cache.state = LOADED;
@@ -656,7 +646,7 @@
         my.getImageInfo({
           src: url,
           success: function success(res) {
-            var img = cacheDom.createImage();
+            var img = ctx.canvas.createImage();
 
             img.onload = function () {
               cache.state = LOADED;
