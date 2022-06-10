@@ -154,7 +154,7 @@ function _get() {
   return _get.apply(this, arguments);
 }
 
-var version = "0.72.2";
+var version = "0.72.3";
 
 var toString = {}.toString;
 var isFunction = function isFunction(obj) {
@@ -607,8 +607,8 @@ function injectCanvas2 () {
         img.onload = function () {
           cache.state = LOADED;
           cache.success = true;
-          cache.width = width;
-          cache.height = height;
+          cache.width = width || img.width;
+          cache.height = height || img.height;
           cache.source = img;
           cache.url = url;
           var list = cache.task.splice(0);
@@ -622,8 +622,8 @@ function injectCanvas2 () {
         img.onerror = function () {
           cache.state = LOADED;
           cache.success = false;
-          cache.width = width;
-          cache.height = height;
+          cache.width = width || img.width;
+          cache.height = height || img.height;
           cache.url = url;
           var list = cache.task.splice(0);
           list.forEach(function (cb) {
@@ -645,8 +645,8 @@ function injectCanvas2 () {
           img.onload = function () {
             cache.state = LOADED;
             cache.success = true;
-            cache.width = res.width;
-            cache.height = res.height;
+            cache.width = res.width || img.width;
+            cache.height = res.height || img.height;
             cache.source = img;
             cache.url = url;
             var list = cache.task.splice(0);
@@ -660,8 +660,8 @@ function injectCanvas2 () {
           img.onerror = function () {
             cache.state = LOADED;
             cache.success = false;
-            cache.width = res.width;
-            cache.height = res.height;
+            cache.width = res.width || img.width;
+            cache.height = res.height || img.height;
             cache.url = url;
             var list = cache.task.splice(0);
             list.forEach(function (cb) {
@@ -674,13 +674,42 @@ function injectCanvas2 () {
           img.src = url;
         },
         fail: function fail() {
-          cache.state = LOADED;
-          cache.success = false;
-          cache.url = url;
-          var list = cache.task.splice(0);
-          list.forEach(function (cb) {
-            return cb(cache);
-          });
+          var img = ctx.canvas.createImage();
+
+          img.onload = function () {
+            cache.state = LOADED;
+            cache.success = true;
+            cache.width = img.width;
+            cache.height = img.height;
+            cache.source = img;
+            cache.url = url;
+            var list = cache.task.splice(0);
+            list.forEach(function (cb) {
+              return cb(cache);
+            });
+            img.onload = null;
+            img.onerror = null;
+          };
+
+          img.onerror = function () {
+            cache.state = LOADED;
+            cache.success = false;
+            cache.width = img.width;
+            cache.height = img.height;
+            cache.url = url;
+            var list = cache.task.splice(0);
+            list.forEach(function (cb) {
+              return cb(cache);
+            });
+            img.onload = null;
+            img.onerror = null;
+          };
+
+          img.src = url; // cache.state = LOADED;
+          // cache.success = false;
+          // cache.url = url;
+          // let list = cache.task.splice(0);
+          // list.forEach(cb => cb(cache));
         }
       });
     }
